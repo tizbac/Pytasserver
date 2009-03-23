@@ -57,7 +57,7 @@ class Channel:
     for m in self.mutes:
       mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
     ops = ' '.join(self.operators)
-    db.query("SELECT id,casename FROM users WHERE casename = %s LIMIT 1" % self.founder)
+    db.query("SELECT id,casename FROM users WHERE casename = '%s' LIMIT 1" % self.founder)
     res = db.store_result()
     if res.num_rows() >= 1:
       r2 = res.fetch_row()[0]
