@@ -209,7 +209,7 @@ class Handler:
 	chsafe = dict(self.main.channels)
 	for ch in chsafe:
 	  for muted in list(chsafe[ch].mutes):
-	    if chsafe[ch].mutes[muted] < time.time():
+	    if chsafe[ch].mutes[muted] > 0.0 and chsafe[ch].mutes[muted] < time.time():
 	      try:
 		del self.main.channels[ch].mutes[muted]
 		self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(mute expired)\n" % ( ch,muted))
