@@ -52,6 +52,24 @@ class Channel:
       self.topic = "*"
     else:
       self.topic = topic
+  def confirm(self,db):
+    db.query("SELECT name FROM channels WHERE name = '%s' LIMIT 1" % self.name.replace("'","\\'"))
+    res = db.store_result()
+    if res.num_rows() == 0:
+      mutesstr = ""
+      for m in self.mutes:
+	mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
+      ops = ' '.join(self.operators)
+      db.query("SELECT id,casename FROM users WHERE casename = '%s' LIMIT 1" % self.founder)
+      res = db.store_result()
+      if res.num_rows() >= 1:
+	r2 = res.fetch_row()[0]
+      else:
+	error("Founder of channel %s does not exist in database !!!!!!!!!!" % self.name)
+	return
+      db.query("INSERT INTO channels (name,founder,mutes,operators,topic) VALUES ('%s','%s','%s','%s','%s')" %
+      (self.name.replace("'",""),str(r2[0]),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n")),False)
+    self.confirmed = True
   def sync(self,db):
     mutesstr = ""
     for m in self.mutes:
