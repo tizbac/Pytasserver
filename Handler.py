@@ -212,7 +212,17 @@ class Handler:
 	    if chsafe[ch].mutes[muted] > 0.0 and chsafe[ch].mutes[muted] < time.time():
 	      try:
 		del self.main.channels[ch].mutes[muted]
-		self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(mute expired)\n" % ( ch,muted))
+		if self.main.sql:
+		  self.main.database.query("SELECT id,casename FROM users WHERE id = %i LIMIT 1" % int(muted))
+		  res = self.main.database.store_result()
+		  if res.num_rows() > 0:
+		    muted_ = res.fetch_row()[0][1]
+		  else:
+		    muted_ = "|Account No longer exists(id was %i)|" % int(muted)
+		else:
+		  muted_ = muted
+		self.main.channels.sync(self.main.database)
+		self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(mute expired)\n" % ( ch,muted_))
 	      except:
 		print '-'*60
 		traceback.print_exc(file=sys.stdout)
