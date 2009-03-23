@@ -12,7 +12,7 @@ if len(args) >= 3:
       print tid
       print self.main.channels[args[1]].mutes
       if args[1] in self.main.channels:
-	if (str(cl.accountid) in self.main.channels[args[1]].operators or cl.accountid == int(self.main.channels[args[1]].founder) or cl.mod == 1) :
+	if (str(cl.accountid) in self.main.channels[args[1]].operators or cl.username == self.main.channels[args[1]].founder or cl.mod == 1) :
 	  self.main.broadcastchannel(args[1],"CHANNELMESSAGE %s <%s> has muted <%s>\n" % ( args[1] , cl.username , args[2]))
 	  self.main.channels[args[1]].mutes.update([(tid,time.time()+mutetime)])
 	  self.main.channels[args[1]].sync(self.main.database)
