@@ -65,7 +65,7 @@ class Channel:
       error("Founder of channel %s does not exist in database !!!!!!!!!!" % self.name)
       return
     db.query("UPDATE channels SET name = '%s',founder = '%s',mutes = '%s',operators = '%s', topic = '%s' WHERE id = %i" %
-    (self.name.replace("'",""),str(r2[0]),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n",self.dbid),False)
+    (self.name.replace("'",""),str(r2[0]),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.dbid),False)
 class sd:
   def __init__(self,host,username,password,database):
     self.uname = username
