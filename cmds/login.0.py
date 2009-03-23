@@ -23,10 +23,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
       self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
       cl.lgstatus = 1
       
-      allclients = dict()
-      for h in self.main.handlers:
-	for k in dict(h.clients):
-	  allclients.update([(k,h.clients[k])])
+      allclients = dict(self.main.allclients)
       for c2 in allclients:
 	cl2 = allclients[c2]
 	if cl2.lgstatus >= 1:
@@ -62,9 +59,9 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
     for c2 in dict(self.main.allclients):
       cl2 = self.main.allclients[c2]
       if cl2.lgstatus >= 1:
-	  c2.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
+	  c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
 	  newstatus = cl2.getstatus()
-	  c2.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
+	  c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
     c.send("LOGININFOEND\n")
 elif len(args) >= 5 and cl.lgstatus < 1 and cl.username in self.main.clientsusernames.keys():
   c.send("DENIED %s\n" % ("Already logged in"))
