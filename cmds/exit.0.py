@@ -1,0 +1,1 @@
+self.remove(co,"Quit")

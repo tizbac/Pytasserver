@@ -1,0 +1,144 @@
+from socket import *
+import string
+import thread
+import time
+import sys
+import traceback
+import pdb
+import re
+import os
+import base64
+import md5
+import commands
+import ip2country
+import select
+from utilities import *
+from colors import *
+class Battle:
+  def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname,founder,hostip,id):
+    self.type = typ
+    self.nattype = nattype
+    self.password = password
+    self.port = port
+    self.maxplayers = maxplayers
+    self.hashcode = hashcode
+    self.minrank = minrank
+    self.maphash = maphash
+    self.mapname = mapname
+    self.title = title
+    self.modname = modname
+    self.players = []
+    self.hostip = hostip
+    self.founder = founder
+    self.players.append(founder)
+    self.id = id
+    if password == "*":
+      self.passworded = 0
+    else:
+      self.passworded = 1
+  def forgebattleopened(self):
+    s = "BATTLEOPENED %i %s %s %s %s %s %s %s %s %s %s\n" % ( self.id,self.type,self.nattype,self.founder,self.hostip,self.port,self.maxplayers,self.passworded,self.minrank,self.maphash,'\t'.join([self.mapname,self.title,self.modname]))
+    return s
+
+class Client:
+  
+  
+  def __init__(self,ip):
+    #self.lastping = time.time()
+    self.ip = ip
+    self.lgstatus = 0 # 0 Just connected,1: Logged in
+    self.username = ""
+    self.afk = 0
+    self.rank = []
+    self.rank.append(0)
+    self.rank.append(0)
+    self.rank.append(0)
+    self.mod = 0
+    self.country = "IT"
+    self.bot = 0
+    self.ingame = 0
+    self.ptime = 0
+    self.password = ""
+    self.battlestatus = ""
+    self.inbuf = ""
+    self.lastping = time.time()
+    self.cpu = 0
+    self.battle = 0
+class Handler:
+  commands = dict()
+  clients = dict()
+  clientsusernames = dict()
+  main = 0
+  id = 0
+  #pendingclients = []
+  accesstable = dict()
+  def __init__(self,main,id):
+    self.id = id
+    self.clients = dict()
+    self.clientsusernames = dict()
+    self.main = main
+    for f in os.listdir("cmds/"):
+     # print f.split(".")
+      if f.split(".")[2] == 'py':
+	g = open("cmds/"+f,"r")
+	self.commands.update([(f.split(".")[0].lower(),g.read())])
+	self.accesstable.update([(f.split(".")[0].lower(),int(f.split(".")[1]))])
+      
+	g.close()
+  def remove(self,c,reason):
+    
+    if self.clients[c].lgstatus > 0:
+      
+      for ch in self.main.channels:
+	if self.clients[c].username in self.main.channels[ch].users:
+	  self.main.broadcastchannel(ch,"LEFT %s %s %s\n" % (ch,self.clients[c].username,reason))
+	  self.main.channels[ch].users.remove(self.clients[c].username)
+      self.main.broadcast("REMOVEUSER %s\n" % self.clients[c].username)
+    try:
+      c.close()
+    except:
+      pass
+    notice("Disconnected %s from handler %i , reason: %s" % (str(self.clients[c].ip),self.id,reason))
+    if self.clients[c].username in self.clientsusernames:
+      del self.clientsusernames[self.clients[c].username]
+    
+    del self.clients[c]
+    
+  def ml(self):
+    self.clients = dict()
+    self.clientsusernames = dict()
+    while 1:
+      time.sleep(0.02)
+      
+      for c in dict(self.clients):
+	cl = self.clients[c]
+	try:
+	  while not cl.inbuf.endswith("\n"):
+	    d = c.recv(1024)
+	    if len(d) == 0:
+	      break
+	    cl.inbuf += d
+	except:
+	    se = sys.exc_value[0]
+	    if sys.exc_value[1] != "Resource temporarily unavailable":
+	      self.remove(c,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
+
+	if cl.inbuf.endswith("\n"):
+	  cmds = cl.inbuf.split("\n")
+	  cl.inbuf = ""
+	  for cm in cmds:
+	    args = cm.strip("\r ").split(" ")
+	    #print "Handler %i: " % (self.id) + str(args)
+	    if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable and cl.lgstatus >= self.accesstable[args[0].lower()]:
+	      try:
+		exec self.commands[args[0].lower()]
+	      except:
+		error(args[0])
+		print '-'*60
+		traceback.print_exc(file=sys.stdout)
+		print '-'*60
+	if time.time() - cl.lastping > 30.0:
+	  self.remove(c,"Ping Timeout")
+	
+	  
+	

@@ -1,0 +1,7 @@
+try:
+  cl.afk = getaway(int(args[1]))
+  cl.ingame = getingame(int(args[1]))
+  newstatus = 1*cl.ingame+2*cl.afk+4*cl.rank[0]+8*cl.rank[1]+16*cl.rank[2]+32*cl.mod+64*cl.bot
+  self.main.broadcast("CLIENTSTATUS %s %s\n" % 
+except:
+  bad("Invalid clientstatus from "+cl.username)

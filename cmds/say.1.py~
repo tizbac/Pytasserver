@@ -1,0 +1,2 @@
+if len(args) >= 4 and args[1] in self.main.channels and cl.username in self.main.channels[args[1]].users:
+  self.main.broadcastchannel(args[1],"SAID %s %s %s\n" % (args[1],cl.username,' '.join(args[2:])))

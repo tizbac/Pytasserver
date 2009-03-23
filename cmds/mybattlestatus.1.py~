@@ -1,0 +1,4 @@
+print len(args)
+if len(args) == 3:
+  cl.battlestatus = args[1]+" "+args[2]
+  self.main.broadcastbattle(cl.battle,"CLIENTBATTLESTATUS "+cl.username+" "+cl.battlestatus+"\n")

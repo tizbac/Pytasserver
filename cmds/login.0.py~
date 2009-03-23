@@ -1,0 +1,29 @@
+allusernames = []
+for h in self.main.handlers:
+  allusernames += h.clientsusernames.keys()
+if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in allusernames:
+  cl.username = args[1]
+  cl.password = args[2]
+  try:
+    cl.cpu = int(args[3])
+  except:
+    cl.cpu = 0
+  c.send("ACCEPTED %s\n" % args[1])
+  self.clientsusernames.update([(args[1],c)])
+  self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
+  cl.lgstatus = 1
+  
+  allclients = dict()
+  for h in self.main.handlers:
+    for k in h.clients:
+      allclients.update([(k,h.clients[k])])
+  for c2 in allclients:
+    cl2 = clsafe[c2]
+    if cl2.lgstatus >= 1:
+      c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
+      newstatus = 1*cl2.ingame+2*cl2.afk+4*cl2.rank[0]+8*cl2.rank[1]+16*cl2.rank[2]+32*cl2.mod+64*cl2.bot
+      c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
+  c.send("LOGININFOEND\n")
+elif len(args) >= 5 and cl.lgstatus < 1 and args[1] in allusernames:
+  c.send("DENIED %s\n" % ("Already logged in"))
+  self.remove(c,"Bad login attempt")

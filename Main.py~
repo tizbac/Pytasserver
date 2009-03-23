@@ -1,0 +1,97 @@
+from socket import *
+import string
+import thread
+import time
+import sys
+import traceback
+import pdb
+import os
+import re
+import base64
+import md5
+import commands
+from ParseConfig import *
+from colors import *
+import Handler
+class Battle:
+  def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname):
+    self.type = typ
+    self.nattype = nattype
+    self.password = password
+    self.port = port
+    self.maxplayers = maxplayers
+    self.hashcode = hashcode
+    self.minrank = minrank
+    self.maphash = maphash
+    self.mapname = mapname
+    self.title = title
+    self.modname = modname
+    self.players = []
+
+class Channel:
+  operators = []
+  founder = ""
+  topic = ""
+  users = []
+  mutes = []
+  def __init__(self,founder):
+    self.founder = founder
+    self.users = []
+    self.mutes = []
+    self.topic = "None "+founder+", you are now the founder of this channel"
+class Main:
+  ms = socket(AF_INET,SOCK_STREAM)
+  handlers = []
+  channels = dict()
+  battles = dict()
+  cid = 0
+  def addchannel(self,name,fnd):
+    self.channels.update([(name,Channel(fnd))])
+  def broadcast(self,cmd,exc=None):
+    for h in self.handlers:
+      for c in h.clients:
+	if h.clients[c].lgstatus > 0 and c != exc:
+	  try:
+	    c.send(cmd)
+	  except:
+	    pass
+  def broadcastchannel(self,ch,cmd,exc=None):
+    for h in self.handlers:
+      for c in h.clients:
+	if h.clients[c].username in self.channels[ch].users and c != exc:
+	  try:
+	    c.send(cmd)
+	  except:
+	    pass
+  def run(self):
+    self.conf = readconfigfile("Server.conf")
+    i = 0
+    while i < int(self.conf["handlers"]):
+      self.handlers.append(Handler.Handler(self,i+1))
+      i += 1
+    
+    for h in self.handlers:
+      thread.start_new_thread(h.ml,())
+    good("Started %i handlers" % len(self.handlers))
+    
+    self.ms.setsockopt( SOL_SOCKET, SO_REUSEADDR,self.ms.getsockopt(SOL_SOCKET, SO_REUSEADDR) | 1 )
+    self.ms.bind((self.conf["listenaddr"],int(self.conf["listenport"])))
+    self.ms.listen(5)
+    good("Listening for connections on port %i" % (int(self.conf["listenport"])))
+    while 1:
+      cs,ip = self.ms.accept()
+      try:
+	cs.setblocking(0)
+	cs.send("TASServer 0.35 * 8201 1\n")
+	hln = dict()
+	for h in self.handlers:
+	  hln.update([(len(h.clients.keys()),h)])
+	lh = hln[hln.keys()[0]]
+	lh.clients.update([(cs,Handler.Client(ip))])
+	#print "Handler %i: %s" % (lh.id,str(lh.clients))
+	good("New connection from %s on handler %i" % ( str(ip),lh.id))
+	
+      except:
+	pass
+ist = Main()
+ist.run()

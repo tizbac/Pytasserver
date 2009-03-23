@@ -1,0 +1,2 @@
+if len(args) >= 3 and args[1] in self.clientsusernames and self.clientsusernames[args[1]] in self.clients:
+  self.clientsusernames[args[1]].send("SAIDPRIVATE %s %s\n" % (cl.username,' '.join(args[2:])))

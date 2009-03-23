@@ -1,0 +1,5 @@
+listenaddr=;
+listenport=8200;
+lanadminun=tizbac;
+lanadminpsw=t;
+handlers=25;

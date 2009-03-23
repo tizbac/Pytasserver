@@ -1,0 +1,15 @@
+if len(args) == 2:
+  if int(args[1]) in self.main.battlesand and self.main.battles[args[1]].passworded == 0:
+    self.main.battles[args[1]].players.append(cl.username)
+    self.main.broadcast("JOINEDBATTLE %i %s\n" % (self.main.battles[args[1]].id,cl.username))
+    c.send("JOINBATTLE %i %s" % (self.main.battles[args[1]].id,self.main.battles[args[1]].hashcode))
+    cl.battle = self.main.battles[args[1]].id
+  elif int(args[1]) in self.main.battlesand and self.main.battles[args[1]].passworded == 1 and len(args) == 3 and self.main.battles[args[1]].password == args[2]:
+    self.main.battles[args[1]].players.append(cl.username)
+    self.main.broadcast("JOINEDBATTLE %i %s\n" % (self.main.battles[args[1]].id,cl.username))
+    c.send("JOINBATTLE %i %s" % (self.main.battles[args[1]].id,self.main.battles[args[1]].hashcode))
+    cl.battle = self.main.battles[args[1]].id
+  elif int(args[1]) in self.main.battlesand and self.main.battles[args[1]].passworded == 1 and len(args) == 3 and self.main.battles[args[1]].password != args[2]:
+    c.send("SERVERMSG *** Error: cannot join the battle, invalid password!\n" % args[1])
+  else:
+    c.send("SERVERMSG *** Error: cannot join the battle, battle does not exist!\n" % args[1])
