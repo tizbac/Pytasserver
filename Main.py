@@ -39,6 +39,7 @@ class Channel:
   topicsetby = "Nobody"
   def __init__(self,founder,name,mutes=dict(),topic="",operators=[],dbid=0):
     self.name = name
+
     self.dbid = dbid
     self.topicsetby = "Nobody"
     self.topichangedtime = 0.0
@@ -56,8 +57,15 @@ class Channel:
     for m in self.mutes:
       mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
     ops = ' '.join(self.operators)
+    db.query("SELECT id,casename FROM channels WHERE casename = %s LIMIT 1" % self.founder)
+    res = db.store_result()
+    if res.num_rows() >= 1:
+      r2 = res.fetch_row()[0]
+    else:
+      error("Founder of channel %s does not exist in database !!!!!!!!!!" % self.name)
+      return
     db.query("UPDATE channels SET name = '%s',founder = '%s',mutes = '%s',operators = '%s', topic = '%s' WHERE id = %i" %
-    (self.name.replace("'",""),self.founder.replace("'",""),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'",""),self.dbid),False)
+    (self.name.replace("'",""),str(r2[0]),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'",""),self.dbid),False)
 class sd:
   def __init__(self,host,username,password,database):
     self.uname = username
