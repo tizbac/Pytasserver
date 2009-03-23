@@ -177,7 +177,7 @@ class Main:
 	self.database.query("SELECT id,casename FROM users WHERE id = %i LIMIT 1" % int(r[1]))
 	res2 = self.database.store_result()
 	if res2.num_rows() > 0:
-	  r3 = res.fetch_row()[0]
+	  r3 = res.fetch_row()
 	  print r3
 	  founder = r3[1]
 	else:
