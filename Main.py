@@ -104,6 +104,7 @@ class Main:
   def __init__(self):
     self.clientsusernames = dict()
     self.clientsaccid = dict()
+    self.allclients = dict()
   def connectionpingthread(self):
     while 1:
       try:
@@ -209,7 +210,9 @@ class Main:
 	  if k < l:
 	    lh = hln[k]
 	    l = k
-	lh.clients.update([(cs,Handler.Client(ip,cs))])
+	ist = Handler.Client(ip,cs)
+	lh.clients.update([(cs,ist)])
+	self.allclients.update([(cs,ist)])
 	#print "Handler %i: %s" % (lh.id,str(lh.clients))
 	good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
 	

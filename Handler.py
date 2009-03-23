@@ -190,6 +190,8 @@ class Handler:
 	    del self.main.clientsusernames[self.clients[c].username]
 	  if self.clients[c].accountid in self.main.clientsaccid:
 	    del self.main.clientsaccid[self.clients[c].accountid]
+	if c in self.main.allclients:
+	  del self.main.allclients[c]
 	del self.clients[c]
     except:
       print '-'*60
