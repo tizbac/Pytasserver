@@ -221,7 +221,7 @@ class Handler:
 		    muted_ = "|Account No longer exists(id was %i)|" % int(muted)
 		else:
 		  muted_ = muted
-		self.main.channels.sync(self.main.database)
+		self.main.channels[ch].sync(self.main.database)
 		self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(mute expired)\n" % ( ch,muted_))
 	      except:
 		print '-'*60
