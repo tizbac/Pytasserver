@@ -23,10 +23,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
       self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
       cl.lgstatus = 1
       
-      allclients = dict()
-      for h in self.main.handlers:
-	for k in dict(h.clients):
-	  allclients.update([(k,h.clients[k])])
+      allclients = dict(self.main.allclients)
       for c2 in allclients:
 	cl2 = allclients[c2]
 	if cl2.lgstatus >= 1:
