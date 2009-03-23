@@ -202,6 +202,8 @@ class Handler:
       while 1:
 	#time.sleep(0.02)
 	iR,oR,eR = select.select(self.clients.keys(),self.clients.keys(),[],0.5)
+	if len(self.iR) == 0:
+	  time.sleep(0.5)
 	chsafe = dict(self.main.channels)
 	for ch in chsafe:
 	  for muted in list(chsafe[ch].mutes):
