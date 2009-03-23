@@ -98,7 +98,19 @@ class Client:
     self.cpu = 0
     self.battle = 0
   def getstatus(self):
-      
+      self.rank = 0
+      if self.ptime >= 300:
+	self.rank = 1
+      if self.ptime >= 900:
+	self.rank = 2
+      if self.ptime >= 1800:
+	self.rank = 3
+      if self.ptime >= 6000:
+	self.rank = 4
+      if self.ptime >= 20000:
+	self.rank = 5
+      if self.ptime >= 60000:
+	self.rank = 6
       bstr= "%s%s%s%s%s" % (int(self.ingame),int(self.afk),dec2bin(self.rank,3),int(self.mod),int(self.bot))
       #print "GetStatus() = "+bstr+" = "+str(bin2dec(bstr))
       return bin2dec(bstr)
