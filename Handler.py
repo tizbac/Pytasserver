@@ -214,7 +214,9 @@ class Handler:
 		del self.main.channels[ch].mutes[muted]
 		self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(mute expired)\n" % ( ch,muted))
 	      except:
-		pass
+		print '-'*60
+		traceback.print_exc(file=sys.stdout)
+		print '-'*60
 	for co in iR:
 	  cl = self.clients[co]
 	  c = cl.sso
