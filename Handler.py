@@ -1,17 +1,7 @@
-import socket
-import string
-import thread
-import time
-import sys
-import traceback
-import pdb
-import re
-import os
-import base64
-import md5
-import commands
-import ip2country
-import select
+import socket,string,thread,time
+import sys,traceback,pdb,re,os
+import base64,md5,commands,ip2country
+import select,os
 from utilities import *
 from colors import *
 class Battle:
