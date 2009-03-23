@@ -8,6 +8,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
       cl.username = r2[6]
       cl.accountid =int(r2[7])
       cl.password = r2[1]
+      cl.ptime = int(r2[2])
       cl.bot = int(r2[4])
       if int(r2[3]) >= 2:
 	cl.mod = 1
