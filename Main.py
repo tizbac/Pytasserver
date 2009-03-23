@@ -177,7 +177,9 @@ class Main:
 	self.database.query("SELECT id,casename FROM users WHERE id = %i LIMIT 1" % int(r[1]))
 	res2 = self.database.store_result()
 	if res2.num_rows() > 0:
-	  founder = res.fetch_row()[0][1]
+	  r3 = res.fetch_row()[0]
+	  print r3
+	  founder = r3[1]
 	else:
 	  error("FATAL: Channel \"%s\" founder does not exist, database damaged, exiting..." % r[0])
 	  return
