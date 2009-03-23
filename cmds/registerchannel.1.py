@@ -1,4 +1,4 @@
-if len(args) == 3:
+if len(args) == 2:
   if args[1] not in self.main.channels:
     c.send("SERVERMSG %s\n" % "This channel does not exist")
   elif cl.mod != 1:
