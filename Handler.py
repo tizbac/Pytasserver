@@ -12,7 +12,7 @@ class StartRect:
     self.right = float(right)
     self.bottom = float(bottom)  
   def forgeaddstartrect(self):
-    s = "ADDSTARTRECT %i %f %f %f %f" % (self.allyno,self.left,self.top,self.right,self.bottom)
+    s = "ADDSTARTRECT %i %f %f %f %f\n" % (self.allyno,self.left,self.top,self.right,self.bottom)
 class Bot:
   def __init__(self,owner,name,battlestatus,teamcolor,aidll=""):
     self.owner = owner
@@ -317,12 +317,14 @@ class Handler:
 	    if s in self.clients:
 	      try:
 		for x in list(self.clients[s].sso.buf):
-		  try:
+		 
 		    z = x
-		    self.clients[s].sso.buf.remove(x)
+		    
 		    s.send(z)
-		  except:
-		    pass
+		    self.clients[s].sso.buf.remove(x)
+
+
+		  
 		#s.send(self.clients[s].sso.buf)
 		#self.clients[s].sso.buf = ""
 	      #except socket.error:
