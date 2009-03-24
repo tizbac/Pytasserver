@@ -69,6 +69,10 @@ class Channel:
 	return
       db.query("INSERT INTO channels (name,founder,mutes,operators,topic) VALUES ('%s','%s','%s','%s','%s')" %
       (self.name.replace("'",""),str(r2[0]),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n")),False)
+      db.query("SELECT id,name FROM channels WHERE name = '%s' LIMIT 1" % self.name.replace("'","\\'"))
+      res = db.store_result()
+      if res.num_rows() > 0:
+	self.dbid = int(res.fetch_row()[0][0])
     self.confirmed = True
   def sync(self,db):
     mutesstr = ""
@@ -191,7 +195,9 @@ class Main:
       self.database.query("SELECT name,founder,operators,mutes,topic,id FROM channels")
       res = self.database.store_result()
       for i in range(res.num_rows()):
+	
 	r = res.fetch_row()[0]
+	print r
 	self.database.query("SELECT id,casename FROM users WHERE id = %i LIMIT 1" % int(r[1]))
 	res2 = self.database.store_result()
 	if res2.num_rows() > 0:

@@ -133,8 +133,11 @@ class Handler:
     
     self.main = main
     for f in os.listdir("cmds/"):
-     # print f.split(".")
-      if f.split(".")[2] == 'py':
+      print f.split(".")
+      if f.split(".") != 3:
+	bad("Failed to load command %s" % f)
+      
+      elif f.split(".")[2] == 'py':
 	g = open("cmds/"+f,"r")
 	self.commands.update([(f.split(".")[0].lower(),g.read())])
 	self.accesstable.update([(f.split(".")[0].lower(),int(f.split(".")[1]))])
@@ -221,7 +224,7 @@ class Handler:
 		    muted_ = "|Account No longer exists(id was %i)|" % int(muted)
 		else:
 		  muted_ = muted
-		self.main.channels.sync(self.main.database)
+		self.main.channels[ch].sync(self.main.database)
 		self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(mute expired)\n" % ( ch,muted_))
 	      except:
 		print '-'*60
