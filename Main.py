@@ -143,9 +143,9 @@ class Main:
   def connectionpingthread(self):
     while 1:
       try:
-	notice("Pinging mysql conection")
+	#notice("Pinging mysql conection")
 	self.database.ping()
-	notice("Ping done")
+	#notice("Ping done")
       except:
 	pass
       time.sleep(30)

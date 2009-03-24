@@ -37,6 +37,8 @@ class Channel:
   topichangedtime = 0.0
   mutes = dict()
   topicsetby = "Nobody"
+  def __del__(self):
+    debug("Channel %s unloaded from memory" % self.name)
   def __init__(self,founder,name,mutes=dict(),topic="",operators=[],dbid=0):
     self.name = name
 
