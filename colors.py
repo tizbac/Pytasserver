@@ -5,10 +5,10 @@ blue = "\033[21;34m"
 normal = "\033[0m"
 purple = "\033[21;35m"
 cyan = "\033[21;36m"
-def loaded(t):
-	print blue+" [LOADED] "+t+normal
-def reloaded(t):
-	print purple+" [RELOADED] "+t+normal
+def debug(t):
+	print blue+" [DEBUG ] "+t+normal
+def info(t):
+	print purple+" [ INFO ] "+t+normal
 def notice(t):
 	print cyan+" [NOTICE] "+t+normal
 def error(t):

@@ -14,7 +14,7 @@ from ParseConfig import *
 from colors import *
 import _mysql as mysql
 import Handler
-class Battle:
+'''class Battle:
   def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname):
     self.type = typ
     self.nattype = nattype
@@ -27,7 +27,7 @@ class Battle:
     self.mapname = mapname
     self.title = title
     self.modname = modname
-    self.players = []
+    self.players = []'''
 
 class Channel:
   operators = []
@@ -37,6 +37,8 @@ class Channel:
   topichangedtime = 0.0
   mutes = dict()
   topicsetby = "Nobody"
+  def __del__(self):
+    debug("Channel %s unloaded from memory" % self.name)
   def __init__(self,founder,name,mutes=dict(),topic="",operators=[],dbid=0):
     self.name = name
 
@@ -104,7 +106,7 @@ class sd:
       if i >= 10000: break
     try:
       self.Locked = True
-      print "Query: "+q
+      #print "Query: "+q
       self.database.query(q)
       if not Lock:
 	self.Locked = False
@@ -131,10 +133,13 @@ class Main:
   channels = dict()
   battles = dict()
   cid = 0
+  def __del__(self):
+    debug("Main instance destroyed")
   def __init__(self):
     self.clientsusernames = dict()
     self.clientsaccid = dict()
     self.allclients = dict()
+    self.battles = dict() 
   def connectionpingthread(self):
     while 1:
       try:

@@ -21,6 +21,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
       self.main.clientsusernames.update([(cl.username,c)])
       self.main.clientsaccid.update([(cl.accountid,c)])
       self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
+      self.main.broadcast("CLIENTSTATUS %s %i\n" % (cl.username,int(cl.getstatus())))
       cl.lgstatus = 1
       
       allclients = dict(self.main.allclients)

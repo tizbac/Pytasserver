@@ -31,6 +31,10 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
 	  c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
 	  newstatus = cl2.getstatus()
 	  c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
+      battles = dict(self.main.battles)
+      for b2 in battles:
+	c.send(battles[b2].forgebattleopened())
+	c.send(battles[b2].forgeupdatebattleinfo())
       c.send("LOGININFOEND\n")
 
     else:

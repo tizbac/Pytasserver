@@ -4,12 +4,43 @@ import base64,md5,commands,ip2country
 import select,os
 from utilities import *
 from colors import *
+class StartRect:
+  def __init__(self,allyno,left,top,right,bottom):
+    self.allyno = int(allyno)
+    self.left = float(left)
+    self.top = float(top)
+    self.right = float(right)
+    self.bottom = float(bottom)  
+  def forgeaddstartrect(self):
+    s = "ADDSTARTRECT %i %f %f %f %f" % (self.allyno,self.left,self.top,self.right,self.bottom)
+class Bot:
+  def __init__(self,owner,name,battlestatus,teamcolor,aidll=""):
+    self.owner = owner
+    self.name = name
+    self.battlestatus = battlestatus
+    self.teamcolor = teamcolor
+    self.aidll = aidll
+  def update(self,battlestatus,teamcolor):
+    self.battlestatus = battlestatus
+    self.teamcolor = teamcolor
+  def forgeupdatebot(self,bid):
+    s = "UPDATEBOT %i %s %s %s\n" % (int(bid),self.name,self.battlestatus,self.teamcolor)
+    return s
+  def forgeaddbot(self,bid):
+    s = "ADDBOT %i %s %s %s %s\n" % (int(bid),self.name,self.owner,self.battlestatus,self.teamcolor)
+    return s
 class Battle:
+  def __del__(self):
+    debug("Battle %i destroyed" % self.id)
   def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname,founder,hostip,id):
     self.type = typ
     self.nattype = nattype
     self.password = password
     self.port = port
+    self.speccount = 0
+    self.startrects = dict()
+    self.bots = []
+    self.locked = 0
     self.maxplayers = maxplayers
     self.hashcode = hashcode
     self.minrank = minrank
@@ -28,6 +59,9 @@ class Battle:
       self.passworded = 1
   def forgebattleopened(self):
     s = "BATTLEOPENED %i %s %s %s %s %s %s %s %s %s %s\n" % ( self.id,self.type,self.nattype,self.founder,self.hostip,self.port,self.maxplayers,self.passworded,self.minrank,self.maphash,'\t'.join([self.mapname,self.title,self.modname]))
+    return s
+  def forgeupdatebattleinfo(self):
+    s = "UPDATEBATTLEINFO %i %i %i %s %s\n" % (self.id,self.speccount,self.locked,self.maphash,self.mapname)
     return s
 class ssock:
   def __init__(self,sock):
@@ -133,8 +167,8 @@ class Handler:
     
     self.main = main
     for f in os.listdir("cmds/"):
-      print f.split(".")
-      if f.split(".") != 3:
+      #print f.split(".")
+      if len(f.split(".")) != 3:
 	bad("Failed to load command %s" % f)
       
       elif f.split(".")[2] == 'py':

@@ -6,8 +6,20 @@ if len(args) == 2:
     cl.battle = self.main.battles[int(args[1])].id
     
     c.send("REQUESTBATTLESTATUS\n")
+    
     for b in dict(self.main.battles):
       try:
+	for bot in list(self.main.battles[b].bots):
+	  c.send(bot.forgeaddbot(int(b)))
+	for rect in dict(self.main.battles[b].startrects):
+	  r = self.main.battles[b].startrects[rect]
+	  c.send(r.forgeaddstartrect())
+	sts = ""
+	stl = []
+	for tag in self.main.battles[b].scripttags:
+	  stl.append(tag+" "+self.main.battles[b].scripttags[tag])
+	sts = '\t'.join(stl)
+	c.send("SETSCRIPTTAGS %s\n" % sts)
 	for p in self.main.battles[b].players:
 	  try:
 	    GT = self.clients[self.clientsusernames[p]]

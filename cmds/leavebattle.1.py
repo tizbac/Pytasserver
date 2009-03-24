@@ -1,4 +1,4 @@
-for b in list(self.main.battles):
+for b in list(self.main.battles.keys()):
   ba = self.main.battles[b]
   if cl.username == ba.founder:
     self.main.broadcast("BATTLECLOSED %i\n" % ba.id)
