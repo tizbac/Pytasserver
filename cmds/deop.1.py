@@ -5,4 +5,5 @@ if len(args) == 3:
     if cl.username == cha.founder or cl.mod == 1:
       if str(cli.accountid) in cha.operators:
 	cha.operators.remove(str(cli.accountid))
+	cha.sync(self.main.database)
 	self.main.broadcastchannel(args[1],"CHANNELMESSAGE %s <%s> has just been removed from channel's operator list by <%s>\n" % (args[1],cli.username,cl.username))
