@@ -165,7 +165,7 @@ class Handler:
   def __init__(self,main,id):
     self.id = id
     self.clients = dict()
-    
+    self.pollobj = select.poll()
     self.main = main
     for f in os.listdir("cmds/"):
       #print f.split(".")
@@ -230,6 +230,10 @@ class Handler:
 	    del self.main.clientsaccid[self.clients[c].accountid]
 	if c in self.main.allclients:
 	  del self.main.allclients[c]
+	try:
+	  self.pollobj.unregister(c.fileno())
+	except:
+	  pass # it got destroyed by itself
 	del self.clients[c]
     except:
       print '-'*60
@@ -241,7 +245,34 @@ class Handler:
     try:
       while 1:
 	#time.sleep(0.02)
-	iR,oR,eR = select.select(self.clients.keys(),self.clients.keys(),[],0.5)
+	#iR,oR,eR = select.select(self.clients.keys(),self.clients.keys(),[],0.5)
+	iR = []
+	oR = list(self.clients.keys())
+	pl = self.pollobj.poll(0.1)
+	for fd in pl:
+	  pollin = bool((fd[1] >> 0) & 1)
+	  pollpri = bool((fd[1] >> 1) & 1)
+	  pollout = bool((fd[1] >> 2) & 1)
+	  pollerr = bool((fd[1] >> 3) & 1)
+	  pollhup = bool((fd[1] >> 4) & 1)
+	  pollnval = bool((fd[1] >> 5) & 1)
+	  if pollin or pollpri:
+	    print " %s ready to receive data" % str(fd)
+	    for s in list(self.clients.keys()):
+	      if s.fileno() == fd[0]:
+		newsocket = s
+	    iR.append(newsocket)
+	  if pollerr or pollhup or pollnval:
+	    #print "Removing %s , socket error" % str(fd)
+	    for s in list(self.clients.keys()):
+		if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
+		  if pollhup:
+		    self.remove(s,"Connection lost")
+		  elif pollnval:
+		    self.remove(s,"Bad file descriptor")
+		  elif pollerr:
+		    self.remove(s,"Socket Exception")
+	#print iR
 	if len(iR) == 0:
 	  time.sleep(0.5)
 	chsafe = dict(self.main.channels)
@@ -266,46 +297,47 @@ class Handler:
 		traceback.print_exc(file=sys.stdout)
 		print '-'*60
 	for co in iR:
-	  cl = self.clients[co]
-	  c = cl.sso
-	  try:
-	      while not cl.inbuf.endswith("\n"):
-		d = co.recv(1024)
-		if len(d) == 0:
-		  break
-		cl.inbuf += d
-	  except socket.error:
-		se = sys.exc_value[0]
-		if not sys.exc_value[1] == "Resource temporarily unavailable":
-		  self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
-	  except:
-		print '-'*60
-		traceback.print_exc(file=sys.stdout)
-		print '-'*60
-	  cl.bs += len(cl.inbuf)
-	  #print cl.lastbsreset+" "+time.time()
-	
-	  if time.time() - cl.lastbsreset > float(self.main.conf["floodlimitseconds"]) :
-	    
-	    if cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]):
-	      if co in self.clients:
-		self.remove(self.clients[co],"Disconnected for flooding")
-	    else:
-	      cl.lastbsreset = time.time()
-	  if cl.inbuf.endswith("\n"):
-	    cmds = cl.inbuf.split("\n")
-	    cl.inbuf = ""
-	    for cm in cmds:
-	      args = cm.strip("\r ").split(" ")
-	      #print "Handler %i: " % (self.id) + str(args)
-	      if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable and cl.lgstatus >= self.accesstable[args[0].lower()]:
-		try:
-		  exec self.commands[args[0].lower()]
-		except:
-		  error(args[0])
+	  if co in self.clients:
+	    cl = self.clients[co]
+	    c = cl.sso
+	    try:
+		while not cl.inbuf.endswith("\n"):
+		  d = co.recv(1024)
+		  if len(d) == 0:
+		    break
+		  cl.inbuf += d
+	    except socket.error:
+		  se = sys.exc_value[0]
+		  if not sys.exc_value[1] == "Resource temporarily unavailable":
+		    self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
+	    except:
 		  print '-'*60
 		  traceback.print_exc(file=sys.stdout)
 		  print '-'*60
+	    cl.bs += len(cl.inbuf)
+	    #print cl.lastbsreset+" "+time.time()
+	  
+	    if time.time() - cl.lastbsreset > float(self.main.conf["floodlimitseconds"]) :
+	      
+	      if cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]):
+		if co in self.clients:
+		  self.remove(self.clients[co],"Disconnected for flooding")
+	      else:
+		cl.lastbsreset = time.time()
+	    if cl.inbuf.endswith("\n"):
+	      cmds = cl.inbuf.split("\n")
+	      cl.inbuf = ""
+	      for cm in cmds:
+		args = cm.strip("\r ").split(" ")
+		#print "Handler %i: " % (self.id) + str(args)
+		if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable and cl.lgstatus >= self.accesstable[args[0].lower()]:
+		  try:
+		    exec self.commands[args[0].lower()]
+		  except:
+		    error(args[0])
+		    print '-'*60
+		    traceback.print_exc(file=sys.stdout)
+		    print '-'*60
 	for co in dict(self.clients):
 	  cl = self.clients[co]
 	  c = cl.sso
