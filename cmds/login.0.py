@@ -37,11 +37,46 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
 	c.send(battles[b2].forgeupdatebattleinfo())
       c.send("LOGININFOEND\n")
 
-    else:
+    elif not self.main.au:
       #print str(args)+" LOGIN failed"
       c.send("DENIED %s\n" % ("Bad username/password"))
-      #self.remove(co,"Bad login attempt")
-      
+      self.remove(co,"Bad login attempt")
+    else:
+      self.main.database.query("SELECT name FROM users WHERE name = '%s'" % (args[1].replace("'","\\'")))
+      res = self.main.database.store_result()
+      if res.num_rows() == 0:
+	cl.username = args[1]
+	cl.password = args[2]
+	cl.accountid = -int(time.time()*10000.0) #Hope that will not fail ;)
+	try:
+	  cl.cpu = int(args[3])
+	except:
+	  cl.cpu = 0
+	c.send("ACCEPTED %s\n" % cl.username)
+	motd = "Hi %s! Welcom to pytasserver\n %i Connected players in %i opened battles\nTo save your progress and/or register channels or get a bot flag you will need to register" % ( args[1],len(self.main.clientsusernames.keys()),len(self.main.battles))
+	for l in motd.split("\n"):
+	  c.send("MOTD %s\n" % l)
+	self.main.clientsusernames.update([(cl.username,c)])
+	self.main.clientsaccid.update([(cl.accountid,c)])
+	self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
+	self.main.broadcast("CLIENTSTATUS %s %i\n" % (cl.username,int(cl.getstatus())))
+	cl.lgstatus = 1
+	
+	allclients = dict(self.main.allclients)
+	for c2 in allclients:
+	  cl2 = allclients[c2]
+	  if cl2.lgstatus >= 1:
+	    c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
+	    newstatus = cl2.getstatus()
+	    c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
+	battles = dict(self.main.battles)
+	for b2 in battles:
+	  c.send(battles[b2].forgebattleopened())
+	  c.send(battles[b2].forgeupdatebattleinfo())
+	c.send("LOGININFOEND\n")
+      else:
+	c.send("DENIED %s\n" % ("Username exists in database"))
+	self.remove(co,"Bad login attempt")
   else:
     cl.username = args[1]
     cl.password = args[2]

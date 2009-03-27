@@ -7,6 +7,7 @@ import traceback
 import pdb
 import os
 import re
+import select
 import base64
 import md5
 import commands
@@ -143,9 +144,9 @@ class Main:
   def connectionpingthread(self):
     while 1:
       try:
-	notice("Pinging mysql conection")
+	#notice("Pinging mysql conection")
 	self.database.ping()
-	notice("Ping done")
+	#notice("Ping done")
       except:
 	pass
       time.sleep(30)
@@ -190,7 +191,10 @@ class Main:
   def run(self):
     self.conf = readconfigfile("Server.conf")
     self.sql = False
+    
     if self.conf["sql"] == "1":
+      if bool(int(self.conf["allowunregisteredusers"])):
+	notice("Users can login without registering!")
       self.sql = True
       notice("MYSQL Enabled!, Connecting to database...")
       self.database = sd("localhost",self.conf["mysqlusername"],self.conf["mysqlpassword"],self.conf["mysqldatabase"])
@@ -258,6 +262,7 @@ class Main:
 	    l = k
 	ist = Handler.Client(ip,cs)
 	lh.clients.update([(cs,ist)])
+	lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
 	self.allclients.update([(cs,ist)])
 	#print "Handler %i: %s" % (lh.id,str(lh.clients))
 	good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))

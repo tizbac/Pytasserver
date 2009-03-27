@@ -1,5 +1,5 @@
 if len(args) >= 3 and args[1] in self.main.channels:
-	if cl.accountid in self.main.channels[args[1]].operators or cl.username == self.main.channels[args[1]].founder or cl.mod == 1:
+	if str(cl.accountid) in self.main.channels[args[1]].operators or cl.username == self.main.channels[args[1]].founder or cl.mod == 1:
 		self.main.channels[args[1]].topic = ' '.join(args[2:])
 		self.main.channels[args[1]].topicsetby = cl.username
 		self.main.channels[args[1]].topichangedtime = time.time()

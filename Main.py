@@ -191,7 +191,11 @@ class Main:
   def run(self):
     self.conf = readconfigfile("Server.conf")
     self.sql = False
+    self.au = False
     if self.conf["sql"] == "1":
+      if bool(int(self.conf["allowunregisteredusers"])):
+	notice("Users can login without registering!")
+      self.au = bool(int(self.conf["allowunregisteredusers"]))
       self.sql = True
       notice("MYSQL Enabled!, Connecting to database...")
       self.database = sd("localhost",self.conf["mysqlusername"],self.conf["mysqlpassword"],self.conf["mysqldatabase"])
