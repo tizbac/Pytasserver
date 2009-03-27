@@ -7,7 +7,7 @@ if len(args) >= 2:
 	#print bn
 	if len(bn) == 2 and len(self.main.battles[b].scripttags) < 129:
 	  self.main.battles[b].scripttags.update([bn])
-	  print self.main.battles[b].scripttags
+	  #print self.main.battles[b].scripttags
       sts = ""
       stl = []
       for tag in self.main.battles[b].scripttags:
