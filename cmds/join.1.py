@@ -13,7 +13,7 @@ if args[1] in self.main.channels:
   
 else:
   self.main.addchannel(args[1],cl.username)
-  #notice("Created new channel #%s with founder <%s>" % (args[1],cl.username))
+  notice("Created new channel #%s with founder <%s>" % (args[1],cl.username))
   c.send("JOIN %s\n" % args[1])
   self.main.channels[args[1]].users.append(cl.username)
   c.send("CLIENTS %s %s\n" % ( args[1], ' '.join(self.main.channels[args[1]].users)))
