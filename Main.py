@@ -136,11 +136,14 @@ class Main:
   cid = 0
   def __del__(self):
     debug("Main instance destroyed")
-  def __init__(self):
+  def __init__(self,flags):
     self.clientsusernames = dict()
     self.clientsaccid = dict()
     self.allclients = dict()
     self.battles = dict() 
+    
+    self.debug = "d" in flags
+    
   def connectionpingthread(self):
     while 1:
       try:
@@ -270,5 +273,8 @@ class Main:
 	
       except:
 	error(traceback.format_exc())
-ist = Main()
+if len(sys.argv) > 1: 
+  ist = Main(sys.argv[1])
+else:
+  ist = Main("")
 ist.run()
