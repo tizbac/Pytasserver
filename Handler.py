@@ -199,7 +199,7 @@ class Handler:
 	      if self.clients[c].username in self.main.channels[ch].users:
 		self.main.broadcastchannel(ch,"LEFT %s %s %s\n" % (ch,self.clients[c].username,reason))
 		self.main.channels[ch].users.remove(self.clients[c].username)
-		if len(self.main.channels[ch].users) == 0:
+		if len(self.main.channels[ch].users) == 0 and not self.main.channels[ch].confirmed:
 		  del self.main.channels[ch]
 	  except:
 	    print '-'*60
