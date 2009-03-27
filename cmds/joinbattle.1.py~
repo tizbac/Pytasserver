@@ -17,7 +17,7 @@ if len(args) == 2:
 	sts = ""
 	stl = []
 	for tag in self.main.battles[b].scripttags:
-	  stl.append(tag+" "+self.main.battles[b].scripttags[tag])
+	  stl.append(tag+"="+self.main.battles[b].scripttags[tag])
 	sts = '\t'.join(stl)
 	c.send("SETSCRIPTTAGS %s\n" % sts)
 	for p in self.main.battles[b].players:
