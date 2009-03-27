@@ -13,7 +13,6 @@ class StartRect:
     self.bottom = float(bottom)  
   def forgeaddstartrect(self):
     s = "ADDSTARTRECT %i %f %f %f %f\n" % (self.allyno,self.left,self.top,self.right,self.bottom)
-    return s
 class Bot:
   def __init__(self,owner,name,battlestatus,teamcolor,aidll=""):
     self.owner = owner
@@ -71,8 +70,6 @@ class ssock:
     self.sck = sock
   def send(self,data):
     self.buf.append(data)
-  def close(self):
-    self.sck.close()
     #print buf
 class BattleStatus:
   def __init__(self,status):
@@ -89,7 +86,10 @@ class BattleStatus:
     self._28_ = 0
   def update(self,status):
     st =  int(status)
-    
+    #print status
+    #for e in dir(self):
+    #  exec("g = self.%s" % e)
+    #  print "self.%s = %s" % (e,str(g))
     self.b0 = 0
     self.ready = getready(st)
     self.teamno = getteam(st)
@@ -100,13 +100,9 @@ class BattleStatus:
     self.sync = getsync(st)
     self.side = getside(st)
     self._28_ = 0
-    print status
-    for e in dir(self):
-      exec("g = self.%s" % e)
-      #debug( "self.%s = %s" % (e,str(g)))
   def calc(self):
     bstr = "0%i%s%s%i%s0000%s%s0000" % (int(self.ready),dec2bin(self.teamno,4),dec2bin(self.allyno,4),int(self.mode),dec2bin(self.handicap,7),dec2bin(self.sync,2),dec2bin(self.side,4))
-    #print bstr+" = "+str(bin2dec(bstr))
+    print bstr+" = "+str(bin2dec(bstr))
     return str(bin2dec(bstr))
 class Client:
   
@@ -180,7 +176,7 @@ class Handler:
 	g = open("cmds/"+f,"r")
 	self.commands.update([(f.split(".")[0].lower(),g.read())])
 	self.accesstable.update([(f.split(".")[0].lower(),int(f.split(".")[1]))])
-	#debug("Loaded command %s" % f.split(".")[0].lower() )
+      
 	g.close()
   def reloadcommands(self):
     self.commands = dict()
@@ -304,7 +300,6 @@ class Handler:
 	  if co in self.clients:
 	    cl = self.clients[co]
 	    c = cl.sso
-	    
 	    try:
 		while not cl.inbuf.endswith("\n"):
 		  d = co.recv(1024)
@@ -333,8 +328,6 @@ class Handler:
 	      cmds = cl.inbuf.split("\n")
 	      cl.inbuf = ""
 	      for cm in cmds:
-		if self.main.debug and cm.strip("\n") != "PONG" and cm != "":
-		  debug("%s Received:%s" % (cl.username,cm.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
 		args = cm.strip("\r ").split(" ")
 		#print "Handler %i: " % (self.id) + str(args)
 		if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable and cl.lgstatus >= self.accesstable[args[0].lower()]:
@@ -360,9 +353,6 @@ class Handler:
 		    z = x
 		    
 		    s.send(z)
-		    if self.main.debug and z.strip("\n") != "PING":
-		      debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
-		      
 		    self.clients[s].sso.buf.remove(x)
 
 

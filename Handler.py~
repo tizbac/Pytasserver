@@ -106,7 +106,7 @@ class BattleStatus:
       #debug( "self.%s = %s" % (e,str(g)))
   def calc(self):
     bstr = "0%i%s%s%i%s0000%s%s0000" % (int(self.ready),dec2bin(self.teamno,4),dec2bin(self.allyno,4),int(self.mode),dec2bin(self.handicap,7),dec2bin(self.sync,2),dec2bin(self.side,4))
-    print bstr+" = "+str(bin2dec(bstr))
+    #print bstr+" = "+str(bin2dec(bstr))
     return str(bin2dec(bstr))
 class Client:
   

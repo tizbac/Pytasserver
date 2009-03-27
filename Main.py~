@@ -274,7 +274,7 @@ class Main:
       except:
 	error(traceback.format_exc())
 if len(sys.argv) > 1: 
-  ist = Main(args[1])
+  ist = Main(sys.argv[1])
 else:
   ist = Main("")
 ist.run()
