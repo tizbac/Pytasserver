@@ -114,6 +114,11 @@ class Client:
   def __init__(self,ip,sock):
     #self.lastping = time.time()
     self.accountid = 0
+    self.supportedfeatures = [] 
+    # FEATURES: CLIENTCHANNELSTATUS, ZIPSTREAM, 250PLAYERS
+    #
+    #
+    #
     self.ip = ip
     self.lgstatus = 0 # 0 Just connected,1: Logged in
     self.username = ""
@@ -261,7 +266,7 @@ class Handler:
 	  pollhup = bool((fd[1] >> 4) & 1)
 	  pollnval = bool((fd[1] >> 5) & 1)
 	  if pollin or pollpri:
-	    #print " %s ready to receive data" % str(fd)
+	    print " %s ready to receive data" % str(fd)
 	    for s in list(self.clients.keys()):
 	      if s.fileno() == fd[0]:
 		newsocket = s
@@ -315,10 +320,12 @@ class Handler:
 		  se = sys.exc_value[0]
 		  if not sys.exc_value[1] == "Resource temporarily unavailable":
 		    self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
+	    except IOError:
+		  self.remove(co,"IOError")
 	    except:
-		  print '-'*60
-		  traceback.print_exc(file=sys.stdout)
-		  print '-'*60
+		  se = sys.exc_value[0]
+		  self.remove(co,str(se))
+
 	    cl.bs += len(cl.inbuf)
 	    #print cl.lastbsreset+" "+time.time()
 	  

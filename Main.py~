@@ -9,12 +9,14 @@ import os
 import re
 import select
 import base64
+from cStringIO import StringIO
 import md5
 import commands
 from ParseConfig import *
 from colors import *
 import _mysql as mysql
 import Handler
+import zlib
 '''class Battle:
   def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname):
     self.type = typ
@@ -29,7 +31,46 @@ import Handler
     self.title = title
     self.modname = modname
     self.players = []'''
+class compressedsocket:
+  def __init__(self,sock):
+    self.sock = sock
+  def send(self,data):
+    self.sock.send(zlib.compress(data))
+  def recv(self,sz):
+    data = self.sock.recv(sz)
+   # debug("Compressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
+    data = zlib.decompress(data)
+    #debug("UNCompressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
+    return data+"\n"
+  def fileno(self):
+    return self.sock.fileno()
 
+def listengzip(self):
+  good("Listening for compressed connections on port %i" % (int(self.conf["listenportgzip"])))
+  while 1:
+      cs,ip = self.msGZ.accept()
+      good("New gzipped connection from %s" %  str(ip))
+      try:
+	cs.setblocking(0)
+	cs = compressedsocket(cs)
+	cs.send("TASServer 0.35 0.78.2 8201 0\n")
+	hln = dict()
+	l = 900000
+	for h in self.handlers:
+	  hln.update([(len(h.clients.keys()),h)])
+	for k in hln:
+	  if k < l:
+	    lh = hln[k]
+	    l = k
+	ist = Handler.Client(ip,cs)
+	lh.clients.update([(cs,ist)])
+	lh.pollobj.register(cs.sock,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
+	self.allclients.update([(cs,ist)])
+	#print "Handler %i: %s" % (lh.id,str(lh.clients))
+	good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
+	
+      except:
+	error(traceback.format_exc())
 class Channel:
   operators = []
   founder = ""
@@ -129,18 +170,22 @@ class sd:
       self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
       self.database.ping()
 class Main:
-  ms = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+  
   handlers = []
   channels = dict()
   battles = dict()
   cid = 0
   def __del__(self):
     debug("Main instance destroyed")
-  def __init__(self):
+  def __init__(self,flags):
     self.clientsusernames = dict()
     self.clientsaccid = dict()
     self.allclients = dict()
     self.battles = dict() 
+    self.ms = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    self.msGZ = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    self.debug = "d" in flags
+    
   def connectionpingthread(self):
     while 1:
       try:
@@ -244,9 +289,14 @@ class Main:
     good("Started %i handlers" % len(self.handlers))
     
     self.ms.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR,self.ms.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1 )
+    self.msGZ.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR,self.ms.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1 )
     self.ms.bind((self.conf["listenaddr"],int(self.conf["listenport"])))
     self.ms.listen(5)
     good("Listening for connections on port %i" % (int(self.conf["listenport"])))
+    self.msGZ.bind((self.conf["listenaddr"],int(self.conf["listenportgzip"])))
+    self.msGZ.listen(5)
+    
+    thread.start_new_thread(listengzip,(self,))
     while 1:
       cs,ip = self.ms.accept()
       good("New connection from %s" %  str(ip))
@@ -270,5 +320,8 @@ class Main:
 	
       except:
 	error(traceback.format_exc())
-ist = Main()
+if len(sys.argv) > 1: 
+  ist = Main(sys.argv[1])
+else:
+  ist = Main("")
 ist.run()
