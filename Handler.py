@@ -314,6 +314,7 @@ class Handler:
 		while not cl.inbuf.endswith("\n"):
 		  d = co.recv(1024)
 		  if len(d) == 0:
+		    self.remove(co,"Connection closed")
 		    break
 		  cl.inbuf += d
 	    except socket.error:
