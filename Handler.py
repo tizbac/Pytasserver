@@ -266,7 +266,7 @@ class Handler:
 	  pollhup = bool((fd[1] >> 4) & 1)
 	  pollnval = bool((fd[1] >> 5) & 1)
 	  if pollin or pollpri:
-	    print " %s ready to receive data" % str(fd)
+	    #print " %s ready to receive data" % str(fd)
 	    for s in list(self.clients.keys()):
 	      if s.fileno() == fd[0]:
 		newsocket = s
