@@ -276,11 +276,11 @@ class Handler:
 	    for s in list(self.clients.keys()):
 		if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
 		  if pollhup:
-		    self.remove(s,"Connection lost")
+		    self.remove(s,"Poll Error: Connection reset by peer")
 		  elif pollnval:
-		    self.remove(s,"Bad file descriptor")
+		    self.remove(s,"Poll Error: Bad file descriptor")
 		  elif pollerr:
-		    self.remove(s,"Socket Exception")
+		    self.remove(s,"Poll Error: Socket Exception")
 	#print iR
 	if len(iR) == 0:
 	  time.sleep(0.5)
@@ -314,13 +314,13 @@ class Handler:
 		while not cl.inbuf.endswith("\n"):
 		  d = co.recv(1024)
 		  if len(d) == 0:
-		    self.remove(co,"Connection closed")
+		    self.remove(co,"Read Error: Connection reset by peer")
 		    break
 		  cl.inbuf += d
 	    except socket.error:
 		  se = sys.exc_value[0]
 		  if not sys.exc_value[1] == "Resource temporarily unavailable":
-		    self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
+		    self.remove(co,"Read Error %i: %s" % (int(se),str(sys.exc_value[1])))
 	    except IOError:
 		  self.remove(co,"IOError")
 	    except:
