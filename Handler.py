@@ -368,7 +368,7 @@ class Handler:
 		    z = x
 		    
 		    s.send(z)
-		    if self.main.debug and z.strip("\n") != "PING":
+		    if self.main.debug:#and z.strip("\n") != "PING":
 		      debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
 		      
 		    self.clients[s].sso.buf.remove(x)
