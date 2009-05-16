@@ -34,14 +34,24 @@ import zlib
 class compressedsocket:
   def __init__(self,sock):
     self.sock = sock
+    
+    self.co = zlib.compressobj(9)
+    self.sock.send(self.co.flush(zlib.Z_SYNC_FLUSH))
+    self.dc = zlib.decompressobj()
   def send(self,data):
-    self.sock.send(zlib.compress(data))
+    self.co.compress(data)
+    self.sock.send(self.co.flush(zlib.Z_SYNC_FLUSH))
+    
   def recv(self,sz):
     data = self.sock.recv(sz)
-   # debug("Compressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
-    data = zlib.decompress(data)
-    #debug("UNCompressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
-    return data+"\n"
+    #debug("Compressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
+    if data = "":
+	return ""
+    data = self.dc.decompress(data)
+    debug("UNCompressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
+    if data == "":
+	data = "\n"
+    return data
   def fileno(self):
     return self.sock.fileno()
 

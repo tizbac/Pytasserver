@@ -89,7 +89,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
     except:
       cl.cpu = 0
     c.send("ACCEPTED %s\n" % cl.username)
-    motd = "Hi %s! Welcom to pytasserver\n %i Connected players in %i opened battles" % ( args[1],len(allusernames),len(self.main.battles))
+    motd = "Hi %s! Welcom to pytasserver\n %i Connected players in %i opened battles" % ( args[1],len(self.main.clientsusernames.keys()),len(self.main.battles))
     for l in motd.split("\n"):
       c.send("MOTD %s\n" % l)
     for l in motd.split("\n"):
