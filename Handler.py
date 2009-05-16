@@ -341,8 +341,8 @@ class Handler:
 	      cmds = cl.inbuf.split("\n")
 	      cl.inbuf = ""
 	      for cm in cmds:
-		if self.main.debug and cm.strip("\n") != "PONG" and cm != "":
-		  debug("%s Received:%s" % (cl.username,cm.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+		if self.main.debug and cm != "":
+		  debug("%s Received:%s" % (cl.username,cm+red+"\n"+blue))
 		args = cm.strip("\r ").split(" ")
 		#print "Handler %i: " % (self.id) + str(args)
 		if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable and cl.lgstatus >= self.accesstable[args[0].lower()]:
