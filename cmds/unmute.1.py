@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 if len(args) >= 3:
   if self.main.sql and args[2] in self.main.clientsusernames:

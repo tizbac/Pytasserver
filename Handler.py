@@ -249,6 +249,8 @@ class Handler:
       print '-'*60
       traceback.print_exc(file=sys.stdout)
       print '-'*60
+  def processcommand(self,args,cl,co,c):
+    pass
   def ml(self):
     self.clients = dict()
     self.clientsusernames = dict()
@@ -292,15 +294,11 @@ class Handler:
 	      try:
 		del self.main.channels[ch].mutes[muted]
 		if self.main.sql:
-		  self.main.database.query("SELECT id,casename FROM users WHERE id = %i LIMIT 1" % int(muted))
-		  res = self.main.database.store_result()
-		  if res.num_rows() > 0:
-		    muted_ = res.fetch_row()[0][1]
-		  else:
-		    muted_ = "|Account No longer exists(id was %i)|" % int(muted)
+		  muted_ = self.main.getaccountbyid(muted)
 		else:
 		  muted_ = muted
 		self.main.channels[ch].sync(self.main.database)
+		#print "CHANNELMESSAGE %s %s has been unmuted(mute expired) " % (ch,muted_)
 		self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(mute expired)\n" % ( ch,muted_))
 	      except:
 		print '-'*60
@@ -347,7 +345,7 @@ class Handler:
 		#print "Handler %i: " % (self.id) + str(args)
 		if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable and cl.lgstatus >= self.accesstable[args[0].lower()]:
 		  try:
-		    exec self.commands[args[0].lower()]
+		    exec self.commands[args[0].lower()].strip(" \t\n\r")
 		  except:
 		    error(args[0])
 		    print '-'*60

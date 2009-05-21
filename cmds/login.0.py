@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsusernames.keys():
   if self.main.sql:
@@ -42,7 +43,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
     elif not self.main.au:
       #print str(args)+" LOGIN failed"
       c.send("DENIED %s\n" % ("Bad username/password"))
-      self.remove(co,"Bad login attempt")
+      self.remove(co,"Bad login attempt, Unregistered login disabled")
     else:
       self.main.database.query("SELECT name FROM users WHERE name = '%s'" % (args[1].replace("'","\\'")))
       res = self.main.database.store_result()

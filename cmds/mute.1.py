@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 print args
 if len(args) >= 3:
   if len(args) >= 4:
@@ -13,9 +14,9 @@ if len(args) >= 3:
     #print self.main.channels[args[1]].mutes
     
     if args[1] in self.main.channels:
-      print self.main.channels[args[1]].founder, cl.username
-      if str(cl.accountid) in self.main.channels[args[1]].operators or cl.username == self.main.channels[args[1]].founder or cl.mod == 1:
-	self.main.broadcastchannel(args[1],"CHANNELMESSAGE %s <%s> has muted <%s>\n" % ( args[1] , cl.username , args[2]))
+      #print self.main.channels[args[1]].founder, cl.username
+      if str(cl.accountid) in self.main.channels[args[1]].operators or cl.accountid == self.main.channels[args[1]].founder or cl.mod == 1:
+	self.main.broadcastchannel(args[1],"CHANNELMESSAGE %s <%s> has muted <%s> for %f seconds\n" % ( args[1] , cl.username , args[2],mutetime))
 	self.main.channels[args[1]].mutes.update([(tid,time.time()+mutetime)])
 	self.main.channels[args[1]].sync(self.main.database)
   else:

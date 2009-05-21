@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 if args[1] in self.main.channels:
   if not cl.username in self.main.channels[args[1]].users:
     self.main.channels[args[1]].users.append(cl.username)
@@ -17,7 +18,7 @@ if args[1] in self.main.channels:
     #bad("%s tried to join more times %s" % (cl.username,args[1]))
   
 else:
-  self.main.addchannel(args[1],cl.username)
+  self.main.addchannel(args[1],cl.accountid)
   notice("Created new channel #%s with founder <%s>" % (args[1],cl.username))
   c.send("JOIN %s\n" % args[1])
   self.main.channels[args[1]].users.append(cl.username)

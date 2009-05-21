@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import socket
 import string
 import thread
@@ -115,34 +116,28 @@ class Channel:
       for m in self.mutes:
 	mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
       ops = ' '.join(self.operators)
-      db.query("SELECT id,casename FROM users WHERE casename = '%s' LIMIT 1" % self.founder)
+      """db.query("SELECT id,casename FROM users WHERE casename = '%s' LIMIT 1" % self.founder)
       res = db.store_result()
       if res.num_rows() >= 1:
 	r2 = res.fetch_row()[0]
       else:
 	error("Founder of channel %s does not exist in database !!!!!!!!!!" % self.name)
-	return
+	return"""
       db.query("INSERT INTO channels (name,founder,mutes,operators,topic) VALUES ('%s','%s','%s','%s','%s')" %
-      (self.name.replace("'",""),str(r2[0]),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n")),False)
+      (self.name.replace("'",""),str(self.founder),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n")),False)
       db.query("SELECT id,name FROM channels WHERE name = '%s' LIMIT 1" % self.name.replace("'","\\'"))
       res = db.store_result()
       if res.num_rows() > 0:
 	self.dbid = int(res.fetch_row()[0][0])
     self.confirmed = True
   def sync(self,db):
+    debug("Saving channel #%s in database" % self.name)
     mutesstr = ""
     for m in self.mutes:
       mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
     ops = ' '.join(self.operators)
-    db.query("SELECT id,casename FROM users WHERE casename = '%s' LIMIT 1" % self.founder)
-    res = db.store_result()
-    if res.num_rows() >= 1:
-      r2 = res.fetch_row()[0]
-    else:
-      error("Founder of channel %s does not exist in database !!!!!!!!!!" % self.name)
-      return
     db.query("UPDATE channels SET name = '%s',founder = '%s',mutes = '%s',operators = '%s', topic = '%s' WHERE id = %i" %
-    (self.name.replace("'",""),str(r2[0]),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.dbid),False)
+    (self.name.replace("'",""),str(self.founder),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.dbid),False)
 class sd: #Makes mysql module threadsafe
   def __init__(self,host,username,password,database):
     self.uname = username
@@ -239,6 +234,30 @@ class Main:
 	      pass
 	except:
 	  pass
+  def getaccountid(self,username):
+    if self.sql:
+      self.database.query("SELECT id,name FROM users WHERE name = '%s'" % username.replace("'","\\'"))
+      res = self.database.store_result()
+      if res.num_rows() >= 1:
+	r2 = res.fetch_row()[0]
+	accid = int(r2[0])
+      else:
+	error("getaccountid(%s) : User doesn't exist in database" % username)
+    else:
+      error("getaccountid(%s) : MYSQL is not enabled" % username)
+    return accid
+  def getaccountbyid(self,id):
+    if self.sql:
+      self.database.query("SELECT id,casename FROM users WHERE id = '%s'" % str(id).replace("'","\\'"))
+      res = self.database.store_result()
+      if res.num_rows() >= 1:
+	r2 = res.fetch_row()[0]
+	accname = r2[1]
+      else:
+	error("getaccountbyid(%s) : User doesn't exist in database" % str(id))
+    else:
+      error("getaccountbyid(%s) : MYSQL is not enabled" %str(id))
+    return accname
   def run(self):
     self.conf = readconfigfile("Server.conf")
     self.sql = False
@@ -259,6 +278,7 @@ class Main:
 	
 	r = res.fetch_row()[0]
 	#print r
+	"""self.getaccountid(r[1].lower())
 	self.database.query("SELECT id,casename FROM users WHERE id = %i LIMIT 1" % int(r[1]))
 	res2 = self.database.store_result()
 	if res2.num_rows() > 0:
@@ -267,7 +287,7 @@ class Main:
 	  founder = r3[1]
 	else:
 	  error("FATAL: Channel \"%s\" founder does not exist, database damaged, exiting..." % r[0])
-	  return
+	  return"""
 	
 	name = r[0]
 	if r[2] and len(r[2]) > 0:
@@ -281,7 +301,7 @@ class Main:
 	    if v.count(":") > 0:
 	      z = v.split(":")
 	      mutes.update([(int(z[0]),float(z[1]))])
-	self.channels.update([(name,Channel(founder,name,mutes,topic,operators,int(r[5])))])
+	self.channels.update([(name,Channel(r[1],name,mutes,topic,operators,int(r[5])))])
 	self.channels[r[0]].confirmed = True
 	good("Added channel %s from database" % r[0])
 
@@ -303,29 +323,51 @@ class Main:
     self.msGZ.listen(5)
     
     thread.start_new_thread(listengzip,(self,))
-    while 1:
-      cs,ip = self.ms.accept()
-      good("New connection from %s" %  str(ip))
-      try:
-	cs.setblocking(0)
-	cs.send("TASServer 0.35 0.78.2 8201 0\n")
-	hln = dict()
-	l = 900000
-	for h in self.handlers:
-	  hln.update([(len(h.clients.keys()),h)])
-	for k in hln:
-	  if k < l:
-	    lh = hln[k]
-	    l = k
-	ist = Handler.Client(ip,cs)
-	lh.clients.update([(cs,ist)])
-	lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
-	self.allclients.update([(cs,ist)])
-	#print "Handler %i: %s" % (lh.id,str(lh.clients))
-	good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
-	
-      except:
-	error(traceback.format_exc())
+    try:
+      while 1:
+	cs,ip = self.ms.accept()
+	good("New connection from %s" %  str(ip))
+	try:
+	  cs.setblocking(0)
+	  cs.send("TASServer 0.35 0.78.2 8201 0\n")
+	  hln = dict()
+	  l = 900000
+	  for h in self.handlers:
+	    hln.update([(len(h.clients.keys()),h)])
+	  for k in hln:
+	    if k < l:
+	      lh = hln[k]
+	      l = k
+	  ist = Handler.Client(ip,cs)
+	  lh.clients.update([(cs,ist)])
+	  lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
+	  self.allclients.update([(cs,ist)])
+	  #print "Handler %i: %s" % (lh.id,str(lh.clients))
+	  good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
+	  
+	except:
+	  error(traceback.format_exc())
+    except KeyboardInterrupt:
+      self.broadcast("SERVERMSGBOX Server received SIGINT, Exiting\n")
+      for h in self.handlers:
+
+	for c in h.clients:
+	  s = h.clients[c].sso.sck
+	  try:
+	    for x in list(h.clients[c].sso.buf):
+	      z = x
+	      
+	      s.send(z)
+	      if self.main.debug:#and z.strip("\n") != "PING":
+		debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+		
+	      self.clients[s].sso.buf.remove(x)
+	  except:
+	    pass
+      raise SystemExit(0)
+    except:
+      error(traceback.format_exc())
+      raise SystemExit(0)
 if len(sys.argv) > 1: 
   ist = Main(sys.argv[1])
 else:
