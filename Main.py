@@ -17,6 +17,7 @@ from colors import *
 import _mysql as mysql
 import Handler
 import zlib
+import threading
 '''class Battle:
   def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname):
     self.type = typ
@@ -142,37 +143,32 @@ class Channel:
       return
     db.query("UPDATE channels SET name = '%s',founder = '%s',mutes = '%s',operators = '%s', topic = '%s' WHERE id = %i" %
     (self.name.replace("'",""),str(r2[0]),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.dbid),False)
-class sd:
+class sd: #Makes mysql module threadsafe
   def __init__(self,host,username,password,database):
     self.uname = username
     self.pw = password
-    self.Locked = False
+    #self.Locked = False
     self.host = host
     self.db = database
+    self.lock = threading.Lock()
     self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
   def query(self,q,Lock=True):
     i = 0
-    while self.Locked:
-      i += 1
-      time.sleep(0.01)
-      if i >= 10000: break
-    try:
-      self.Locked = True
-      #print "Query: "+q
-      self.database.query(q)
-      if not Lock:
-	self.Locked = False
-    except:
-      self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
-      self.database.query(q)
+    self.lock.acquire()
+    self.database.query(q)
+    if not Lock:
+    	self.lock.release()
+    #except:
+    #  self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
+    #  self.database.query(q)
   def store_result(self):
     try:
       res = self.database.store_result()
-      self.Locked = False
+      self.lock.release()
       return res
     except:
-      self.Locked = False
-      self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
+      self.lock.release()
+      #self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
   def ping(self):
     try:
       self.database.ping()

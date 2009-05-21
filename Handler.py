@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import socket,string,thread,time
 import sys,traceback,pdb,re,os
 import base64,md5,commands,ip2country
@@ -151,7 +152,7 @@ class Client:
 	self.rank = 3
       if self.ptime >= 6000:
 	self.rank = 4
-      if self.ptime >= 20000:
+      if self.ptime >= 18000:
 	self.rank = 5
       if self.ptime >= 60000:
 	self.rank = 6
@@ -328,15 +329,14 @@ class Handler:
 		  self.remove(co,str(se))
 
 	    cl.bs += len(cl.inbuf)
-	    #print cl.lastbsreset+" "+time.time()
-	  
 	    if time.time() - cl.lastbsreset > float(self.main.conf["floodlimitseconds"]) :
-	      
-	      if cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]):
-		if co in self.clients:
-		  self.remove(self.clients[co],"Disconnected for flooding")
-	      else:
-		cl.lastbsreset = time.time()
+	      cl.bs = 0
+	      cl.lastbsreset = time.time()
+	    #print "cl.bs > "+str(int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))+" = "+str(cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))
+	    if cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]):
+	      self.remove(co,"Disconnected for flooding")
+
+		
 	    if cl.inbuf.endswith("\n"):
 	      cmds = cl.inbuf.split("\n")
 	      cl.inbuf = ""
