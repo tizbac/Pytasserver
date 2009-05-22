@@ -212,6 +212,17 @@ class Main:
 	      pass
 	except:
 	  pass
+  def broadcastadmins(self,cmd,exc=None):
+    for h in self.handlers:
+      for c in dict(h.clients):
+	try:
+	  if c in h.clients and h.clients[c].lgstatus > 0 and c != exc and h.clients[c].admin == 1:
+	    try:
+	      h.clients[c].sso.send(cmd)
+	    except:
+	      pass
+	except:
+	  pass
   def broadcastchannel(self,ch,cmd,exc=None):
     for h in self.handlers:
       for c in dict(h.clients):
@@ -234,6 +245,15 @@ class Main:
 	      pass
 	except:
 	  pass
+  def getuserist(self,username):
+    ul = username.lower()
+    for u in self.clientsusernames:
+      if ul == u.lower():
+	for h in self.handlers:
+	  if self.clientsusernames[u].sck in h.clients:
+	    ist = h.clients[self.clientsusernames[u].sck]
+	    return ist
+    return None
   def getaccountid(self,username):
     if self.sql:
       self.database.query("SELECT id,name FROM users WHERE name = '%s'" % username.replace("'","\\'"))
@@ -364,6 +384,12 @@ class Main:
 	      self.clients[s].sso.buf.remove(x)
 	  except:
 	    pass
+	  if h.clients[c].sql:
+	    try:
+	      h.clients[c].sync(self.database)
+	    except:
+	      error("Cannot sync player <%s>" % h.clients[c].username)
+	      error(traceback.format_exc())
       raise SystemExit(0)
     except:
       error(traceback.format_exc())

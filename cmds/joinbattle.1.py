@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 if len(args) == 2:
   if int(args[1]) in self.main.battles and self.main.battles[int(args[1])].passworded == 0:
     self.main.battles[int(args[1])].players.append(cl.username)
@@ -33,7 +34,7 @@ if len(args) == 2:
     except:
       debug("JOINBATTLE Error"+red+" "+traceback.format_exc())
 	    
-  elif int(args[1]) in self.main.battles and self.main.battles[int(args[1])].passworded == 1 and len(args) == 3 and self.main.battles[int(args[1])].password == args[2]:
+  elif int(args[1]) in self.main.battles and self.main.battles[int(args[1])].passworded == 1 and len(args) >= 3 and self.main.battles[int(args[1])].password == ' '.join(args[2:]):
     self.main.battles[int(args[1])].players.append(cl.username)
     self.main.broadcast("JOINEDBATTLE %i %s\n" % (self.main.battles[int(args[1])].id,cl.username))
     c.send("JOINBATTLE %i %s\n" % (self.main.battles[int(args[1])].id,self.main.battles[int(args[1])].hashcode))

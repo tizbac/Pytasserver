@@ -121,6 +121,7 @@ class Client:
     #
     #
     self.ip = ip
+    self.sql = False
     self.lgstatus = 0 # 0 Just connected,1: Logged in
     self.username = ""
     self.afk = 0
@@ -163,6 +164,21 @@ class Client:
       self.battlestatus.update(status)
   def getbattlestatus(self):
       return self.battlestatus.calc()
+  def sync(self,db):
+    if self.username == "":
+      error("Sync() : Trying to sync a player with empty name!")
+      return
+    if not self.sql:
+      error("Sync() : Player <%s> is not an sql user!" % self.username)
+      return
+    debug("Saving user <%s> in database..." % self.username)
+    al = 1
+    if self.mod == 1:
+      al = 2
+    if self.admin == 1:
+      al = 3
+    db.query("UPDATE users SET name = '%s', password = '%s', playtime = %i, accesslevel = %i, bot = %i, banned = %i, casename = '%s' WHERE id = %i" % (self.username.lower().replace("'","\\'"),self.password,self.ptime,al,self.bot,0,self.username.replace("'","\\'"),self.accountid),False)
+    
     
 class Handler:
   commands = dict()
@@ -244,6 +260,11 @@ class Handler:
 	  self.pollobj.unregister(c.fileno())
 	except:
 	  pass # it got destroyed by itself
+	if self.clients[c].lgstatus > 0:
+	  try:
+	    self.clients[c].sync(self.main.database)
+	  except:
+	    error("Cannot sync player <%s> to database" % self.clients[c].username)
 	del self.clients[c]
     except:
       print '-'*60
@@ -349,8 +370,14 @@ class Handler:
 		  except:
 		    error(args[0])
 		    print '-'*60
-		    traceback.print_exc(file=sys.stdout)
+		    tb = traceback.format_exc()
+		    print tb
 		    print '-'*60
+		    self.main.broadcastadmins("SERVERMSG Broadcast to all admins\n")
+		    self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))
+		    for l in tb.split("\n"):
+		      self.main.broadcastadmins("SERVERMSG %s\n" % l)
+		    self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))  
 	for co in dict(self.clients):
 	  cl = self.clients[co]
 	  c = cl.sso

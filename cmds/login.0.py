@@ -9,6 +9,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
       cl.username = r2[6]
       cl.accountid =int(r2[7])
       cl.password = r2[1]
+      cl.sql = True
       cl.ptime = int(r2[2])
       cl.bot = int(r2[4])
       if int(r2[3]) >= 2:
@@ -51,6 +52,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1] not in self.main.clientsuserna
 	cl.username = args[1]
 	cl.password = args[2]
 	cl.accountid = -int(time.time()*10000.0) #Hope that will not fail ;)
+	cl.sql = False
 	try:
 	  cl.cpu = int(args[3])
 	except:
