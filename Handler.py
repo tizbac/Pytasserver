@@ -353,7 +353,7 @@ class Handler:
 	      cl.lastbsreset = time.time()
 	    #print "cl.bs > "+str(int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))+" = "+str(cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))
 	    if cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]):
-	      self.remove(co,"Disconnected for flooding")
+	      self.remove(co,"Flood limit exceeded , Max flood is %i bytes/%fseconds, current flood was %i" % (int(self.main.conf["floodlimitbw"]),float(self.main.conf["floodlimitseconds"]),int(float(cl.bs)/float(self.main.conf["floodlimitseconds"]))))
 
 		
 	    if cl.inbuf.endswith("\n"):
@@ -375,7 +375,7 @@ class Handler:
 		    tb = traceback.format_exc()
 		    print tb
 		    print '-'*60
-		    self.main.broadcastadmins("SERVERMSG Broadcast to all admins\n")
+		    self.main.broadcastadmins("SERVERMSG Broadcast to all admins - Command issued was '%s' by '%s'\n" % (args[0].upper(),cl.username))
 		    self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))
 		    for l in tb.split("\n"):
 		      self.main.broadcastadmins("SERVERMSG %s\n" % l)
