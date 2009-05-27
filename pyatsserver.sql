@@ -18,7 +18,7 @@ CREATE TABLE `channels` (
   `operators` text,
   `topic` text,
   PRIMARY KEY  (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 #
 # Table structure for table 'users'
@@ -35,5 +35,5 @@ CREATE TABLE `users` (
   `banned` tinyint(4) NOT NULL,
   `casename` text,
   PRIMARY KEY  (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=609 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
