@@ -19,6 +19,7 @@ import _mysql as mysql
 import Handler
 import zlib
 import threading
+from CommandLimit import *
 '''class Battle:
   def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname):
     self.type = typ
@@ -65,7 +66,7 @@ def listengzip(self):
       try:
 	cs.setblocking(0)
 	cs = compressedsocket(cs)
-	cs.send("TASServer 0.35 0.78.2 8201 0\n")
+	cs.send("TASServer 0.35 0.79.0 8201 0\n")
 	hln = dict()
 	l = 900000
 	for h in self.handlers:
@@ -282,6 +283,11 @@ class Main:
     self.conf = readconfigfile("Server.conf")
     self.sql = False
     self.au = False
+    self.climit = "commandlimit" in self.conf and self.conf["commandlimit"] == "1"
+    if self.climit:
+      self.cmdlimit = CommandsLimitHandler(self)
+    else:
+      self.cmdlimit = None
     if self.conf["sql"] == "1":
       if bool(int(self.conf["allowunregisteredusers"])):
 	notice("Users can login without registering!")

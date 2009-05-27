@@ -366,6 +366,8 @@ class Handler:
 		#print "Handler %i: " % (self.id) + str(args)
 		if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable and cl.lgstatus >= self.accesstable[args[0].lower()]:
 		  try:
+		    if self.main.climit:
+		      self.main.cmdlimit.oncommand(cl.username,self,co,args[0].upper())
 		    exec self.commands[args[0].lower()].strip(" \t\n\r")
 		  except:
 		    error(args[0])
