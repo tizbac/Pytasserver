@@ -275,8 +275,10 @@ class Handler:
   def ml(self):
     self.clients = dict()
     self.clientsusernames = dict()
+    
     try:
       while 1:
+	#debug("Handler %i: %f" % (self.id,time.time()))
 	#time.sleep(0.02)
 	#iR,oR,eR = select.select(self.clients.keys(),self.clients.keys(),[],0.5)
 	iR = []
@@ -381,35 +383,36 @@ class Handler:
 		      self.main.broadcastadmins("SERVERMSG %s\n" % l)
 		    self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))  
 	for co in dict(self.clients):
-	  cl = self.clients[co]
-	  c = cl.sso
-	  
-	  if time.time() - cl.lastping > 30.0:
-	    self.remove(co,"Ping Timeout")
-	  
-	  for s in oR:
-	    if s in self.clients:
-	      try:
-		for x in list(self.clients[s].sso.buf):
-		 
-		    z = x
-		    
-		    s.send(z)
-		    if self.main.debug:#and z.strip("\n") != "PING":
-		      debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
-		      
-		    self.clients[s].sso.buf.remove(x)
-
-
+	  if co in self.clients:
+	    cl = self.clients[co]
+	    c = cl.sso
+	    
+	    if time.time() - cl.lastping > 30.0:
+	      self.remove(co,"Ping Timeout")
+	    
+	    for s in oR:
+	      if s in self.clients:
+		try:
+		  for x in list(self.clients[s].sso.buf):
 		  
-		#s.send(self.clients[s].sso.buf)
-		#self.clients[s].sso.buf = ""
-	      #except socket.error:
-		#se = sys.exc_value[0]
-		#if not sys.exc_value[1] == "Resource temporarily unavailable":
-		 # self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
-	      except:
-		  pass
+		      z = x
+		      
+		      s.send(z)
+		      if self.main.debug:#and z.strip("\n") != "PING":
+			debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+			
+		      self.clients[s].sso.buf.remove(x)
+
+
+		    
+		  #s.send(self.clients[s].sso.buf)
+		  #self.clients[s].sso.buf = ""
+		#except socket.error:
+		  #se = sys.exc_value[0]
+		  #if not sys.exc_value[1] == "Resource temporarily unavailable":
+		  # self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
+		except:
+		    pass
     except:
       print "---------------------FATAL ERROR-----------------------"
       print '-'*60
