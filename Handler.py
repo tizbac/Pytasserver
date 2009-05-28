@@ -282,7 +282,7 @@ class Handler:
 	  pass
 	notice("Disconnected %s from handler %i , reason: %s" % (str(self.clients[c].ip),self.id,reason))
 	if self.clients[c].lgstatus > 0:  
-	  if self.clients[c].username in self.main.clientsusernames:
+	  if self.clients[c].username.lower() in self.main.clientsusernames:
 	    del self.main.clientsusernames[self.clients[c].username.lower()]
 	  if self.clients[c].accountid in self.main.clientsaccid:
 	    del self.main.clientsaccid[self.clients[c].accountid]
