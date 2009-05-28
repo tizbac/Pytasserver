@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 success = False
-if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clientsusernames.keys():
+if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clientsusernames:
   if self.main.sql:
     self.main.database.query("SELECT name,password,playtime,accesslevel,bot,banned,casename,id FROM users WHERE name = '%s' AND password = '%s' LIMIT 1" % (args[1].replace("'","").lower(),args[2].replace("'","")))
     res = self.main.database.store_result()
