@@ -7,7 +7,7 @@ if args[1] in self.main.channels:
     c.send("CLIENTS %s %s\n" % ( args[1], ' '.join(self.main.channels[args[1]].users)))
     if "CLIENTCHANNELSTATUS" in cl.supportedfeatures:
       for u in list(self.main.channels[args[1]].users):
-	cli = self.main.allclients[self.main.clientsusernames[cl.username].sck]
+	cli = self.main.allclients[self.main.clientsusernames[cl.username.lower()].sck]
 	bstr = "%i%i%i" % (int(int(cli.accountid) in self.main.channels[args[1]].operators),int(int(cli.accountid) in self.main.channels[args[1]].mutes),int(cli.username == self.main.channels[args[1]].founder))
 	c.send("CLIENTCHANNELSTATUS %s %s %i\n" % (args[1],cli.username,bin2dec(bstr)))   #CLIENTCHANNELSTATUS channel user status
     self.main.broadcastchannel(args[1],"JOINED %s %s\n" % (args[1],cl.username),co)

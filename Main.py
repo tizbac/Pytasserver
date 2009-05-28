@@ -75,7 +75,7 @@ def listengzip(self):
 	  if k < l:
 	    lh = hln[k]
 	    l = k
-	ist = Handler.Client(ip,cs)
+	ist = Handler.Client(ip,cs,lh)
 	lh.clients.update([(cs,ist)])
 	lh.pollobj.register(cs.sock,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
 	self.allclients.update([(cs,ist)])
@@ -264,8 +264,10 @@ class Main:
 	accid = int(r2[0])
       else:
 	error("getaccountid(%s) : User doesn't exist in database" % username)
+	return None
     else:
       error("getaccountid(%s) : MYSQL is not enabled" % username)
+      return None
     return accid
   def getaccountbyid(self,id):
     if self.sql:
@@ -355,7 +357,7 @@ class Main:
 	good("New connection from %s" %  str(ip))
 	try:
 	  cs.setblocking(0)
-	  cs.send("TASServer 0.35 0.78.2 8201 0\n")
+	  cs.send("TASServer %s %s %s 0\n" % (self.conf["serverversion"],self.conf["springversion"],self.conf["natport"]))
 	  hln = dict()
 	  l = 900000
 	  for h in self.handlers:
@@ -364,7 +366,7 @@ class Main:
 	    if k < l:
 	      lh = hln[k]
 	      l = k
-	  ist = Handler.Client(ip,cs)
+	  ist = Handler.Client(ip,cs,lh)
 	  lh.clients.update([(cs,ist)])
 	  lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
 	  self.allclients.update([(cs,ist)])

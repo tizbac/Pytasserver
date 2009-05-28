@@ -29,7 +29,7 @@ class Bot:
     s = "UPDATEBOT %i %s %s %s\n" % (int(bid),self.name,self.battlestatus,self.teamcolor)
     return s
   def forgeaddbot(self,bid):
-    s = "ADDBOT %i %s %s %s %s\n" % (int(bid),self.name,self.owner,self.battlestatus,self.teamcolor)
+    s = "ADDBOT %i %s %s %s %s %s\n" % (int(bid),self.name,self.owner,self.battlestatus,self.teamcolor,self.aidll)
     return s
 class Battle:
   def __del__(self):
@@ -42,7 +42,7 @@ class Battle:
     self.scripttags = dict()
     self.speccount = 0
     self.startrects = dict()
-    self.bots = []
+    self.bots = dict()
     self.locked = 0
     self.maxplayers = maxplayers
     self.hashcode = hashcode
@@ -55,6 +55,7 @@ class Battle:
     self.hostip = hostip
     self.founder = founder
     self.players.append(founder)
+    self.disabledunits = []
     self.id = id
     if password == "*":
       self.passworded = 0
@@ -67,13 +68,38 @@ class Battle:
     s = "UPDATEBATTLEINFO %i %i %i %s %s\n" % (self.id,self.speccount,self.locked,self.maphash,self.mapname)
     return s
 class ssock:
-  def __init__(self,sock):
+  def __init__(self,sock,ist):
     self.buf = []
+    self.ist = ist
     self.sck = sock
   def send(self,data):
     self.buf.append(data)
   def close(self):
     self.sck.close()
+  def Flush(self,Final=False):
+    if Final:
+      for x in list(self.buf):
+	z = str(x)
+	self.sck.send(z)
+	if self.ist.main.debug:#and z.strip("\n") != "PING":
+	  debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+	self.buf.remove(x)
+    else:
+      try:
+	for x in list(self.buf):
+	  z = str(x)
+	  self.sck.send(z)
+	  if self.ist.main.debug:#and z.strip("\n") != "PING":
+	    debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+	  self.buf.remove(x)
+      except socket.error:
+	se = sys.exc_value[0]
+	if not sys.exc_value[1] == "Resource temporarily unavailable":
+	  self.ist.remove(self.sck,"Write Error %i: %s" % (int(se),str(sys.exc_value[1])))
+      except:
+	print traceback.format_exc()
+	self.ist.remove(self.sck,"Critical Error While flushing buffer, See stdout for details")
+	
     #print buf
 class BattleStatus:
   def __init__(self,status):
@@ -112,7 +138,7 @@ class BattleStatus:
 class Client:
   
   
-  def __init__(self,ip,sock):
+  def __init__(self,ip,sock,ist):
     #self.lastping = time.time()
     self.accountid = 0
     self.supportedfeatures = [] 
@@ -120,6 +146,7 @@ class Client:
     #
     #
     #
+    
     self.ip = ip
     self.sql = False
     self.lgstatus = 0 # 0 Just connected,1: Logged in
@@ -133,7 +160,8 @@ class Client:
     self.country = ip2country.lookup(self.ip[0])
     self.bot = 0
     self.admin = 0
-    self.sso = ssock(sock)
+    self.ist = ist
+    self.sso = ssock(sock,self.ist)
     self.ingame = 0
     self.ptime = 0
     self.teamcolor = "0"
@@ -142,7 +170,7 @@ class Client:
     self.inbuf = ""
     self.lastping = time.time()
     self.cpu = 0
-    self.battle = 0
+    self.battle = -1
   def getstatus(self):
       self.rank = 0
       if self.ptime >= 300:
@@ -219,6 +247,7 @@ class Handler:
     try:
       
       if c in self.clients:
+	self.clients[c].sso.Flush(True)
 	if self.clients[c].lgstatus > 0:  
 	  try:
 	    for ch in list(self.main.channels):
@@ -251,7 +280,7 @@ class Handler:
 	notice("Disconnected %s from handler %i , reason: %s" % (str(self.clients[c].ip),self.id,reason))
 	if self.clients[c].lgstatus > 0:  
 	  if self.clients[c].username in self.main.clientsusernames:
-	    del self.main.clientsusernames[self.clients[c].username]
+	    del self.main.clientsusernames[self.clients[c].username.lower()]
 	  if self.clients[c].accountid in self.main.clientsaccid:
 	    del self.main.clientsaccid[self.clients[c].accountid]
 	if c in self.main.allclients:
@@ -260,7 +289,7 @@ class Handler:
 	  self.pollobj.unregister(c.fileno())
 	except:
 	  pass # it got destroyed by itself
-	if self.clients[c].lgstatus > 0:
+	if self.clients[c].lgstatus > 0 and self.clients[c].sql:
 	  try:
 	    self.clients[c].sync(self.main.database)
 	  except:
@@ -392,16 +421,7 @@ class Handler:
 	    
 	    for s in oR:
 	      if s in self.clients:
-		try:
-		  for x in list(self.clients[s].sso.buf):
-		  
-		      z = x
-		      
-		      s.send(z)
-		      if self.main.debug:#and z.strip("\n") != "PING":
-			debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
-			
-		      self.clients[s].sso.buf.remove(x)
+		  self.clients[s].sso.Flush()
 
 
 		    
@@ -411,8 +431,8 @@ class Handler:
 		  #se = sys.exc_value[0]
 		  #if not sys.exc_value[1] == "Resource temporarily unavailable":
 		  # self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
-		except:
-		    pass
+		
+		    
     except:
       print "---------------------FATAL ERROR-----------------------"
       print '-'*60

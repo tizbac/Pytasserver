@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 if len(args) == 3:
-  if args[2] in self.main.clientsusernames and args[1] in self.main.channels:
-    cli = self.main.allclients[self.main.clientsusernames[args[2]].sck]
+  if args[2].lower() in self.main.clientsusernames and args[1] in self.main.channels:
+    cli = self.main.allclients[self.main.clientsusernames[args[2].lower()].sck]
     cha = self.main.channels[args[1]]
     if cl.accountid == cha.founder or cl.mod == 1:
       if str(cli.accountid) not in cha.operators:

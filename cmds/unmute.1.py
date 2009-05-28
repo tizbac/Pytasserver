@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 if len(args) >= 3:
-  if self.main.sql and args[2] in self.main.clientsusernames:
-    tsck = self.main.clientsusernames[args[2]].sck
+  if self.main.sql and args[2].lower() in self.main.clientsusernames:
+    tsck = self.main.clientsusernames[args[2].lower()].sck
     for h in self.main.handlers:
       if tsck in h.clients:
 	tid = h.clients[tsck].accountid

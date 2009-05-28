@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-print args
+#print args
 if len(args) >= 3:
   if len(args) >= 4:
     mutetime = float(args[3])*60.0
@@ -9,10 +9,10 @@ if len(args) >= 3:
     tid = self.main.getaccountid(args[2].lower())
     if not tid and not self.main.au:
       c.send("SERVERMSG MUTE Error: user <%s> does not exist in database\n")
-    elif self.main.au and args[2] in self.main.clientsusernames:
+    elif self.main.au and args[2].lower() in self.main.clientsusernames:
       for h in self.main.handlers:
-	if self.main.clientsusernames[args[2]] in h.clients:
-	  tid = h.clients[self.main.clientsusernames[args[2]]].accountid
+	if self.main.clientsusernames[args[2].lower()] in h.clients:
+	  tid = h.clients[self.main.clientsusernames[args[2].lower()]].accountid
     else:
       c.send("SERVERMSG MUTE Error: user <%s> does not exist\n")
       tid = None

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 if len(args) >= 2 and cl.mod == 1:
 	if len(args) >= 3:
@@ -6,7 +7,7 @@ if len(args) >= 2 and cl.mod == 1:
 		reason = "Not given"
 	print "Kicking "+args[1]
 	
-	if args[1] in dict(self.main.clientsusernames):
+	if args[1].lower() in dict(self.main.clientsusernames):
 		for cha in dict(self.main.channels):
 		  if args[1] in self.main.channels[cha].users:
 		    self.main.broadcastchannel(cha,"CHANNELMESSAGE %s <%s> has kicked <%s> from server (Reason: %s)\n" % (cha,cl.username,args[1],reason))

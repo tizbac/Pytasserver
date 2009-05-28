@@ -3,6 +3,7 @@ import time
 from ParseConfig import *
 from colors import *
 import thread
+import threading
 import string
 """class CommandLimit:
   def __init__(self,cmdname,n,secs,usermult=1.0):
@@ -12,6 +13,7 @@ import string
     self.usermult = usermult"""
 class CommandsLimitHandler:
   def __init__(self,mainist,configfile="CommandsLimit.cfg"):
+    self.lock = threading.Lock()
     self.main = mainist
     self.f = readconfigfile(configfile)
     self.limits = dict()
@@ -25,6 +27,7 @@ class CommandsLimitHandler:
     good("Command antiflood thread started")
     while 1:
       time.sleep(0.05)
+      self.lock.acquire()
       for l in dict(self.userlimits):
 	for ul in list(self.userlimits[l]):
 	  if time.time() > ul[2]:
@@ -32,19 +35,36 @@ class CommandsLimitHandler:
 	  else:
 	    if ul[1] > self.limits[ul[0]][0]:
 	      ul[3].remove(ul[4],"%s command abuse: frequency is too high, max is %i times in %f seconds" % (ul[0],self.limits[ul[0]][0],self.limits[ul[0]][1]))
+      self.lock.release()
+  def reloadlimits(self,configfile="CommandsLimit.cfg"):
+    notice("Reloading command flood limits...")
+    self.f = readconfigfile(configfile)
+    self.lock.acquire()
+    self.limits = dict()
+    self.userlimits = dict()
+    for l in self.f:
+      d = parselist(self.f[l],",") # maxn,secs,usermult(for example in channels),datamult
+      self.limits.update([(l.upper(),[int(d[0]),float(d[1]),float(d[2]),float(d[3])])])
+      debug("Command %s: Limit is %i times in %f seconds, usermult = %f, datamult = %f" % (l.upper(),int(d[0]),float(d[1]),float(d[2]),float(d[3])))
+    good("Reloading complete")
+    self.lock.release()
   def oncommand(self,user,handler,client,command):
-    if command.upper() in self.limits:
-      if user not in self.userlimits:
-	self.userlimits.update([(user,[[command,1,time.time()+self.limits[command.upper()][1],handler,client]])])
-      else:
-	added = False
-	for j in self.userlimits[user]:
-	  if j[0] == command.upper():
-	    j[1] += 1
-	    added = True
-	    break
-	if not added:
-	  self.userlimits[user].append([command,1,time.time()+self.limits[command.upper()][1],handler,client])
+    try:
+      if handler.clients[client].admin == 0:
+	if command.upper() in self.limits:
+	  if user not in self.userlimits:
+	    self.userlimits.update([(user,[[command,1,time.time()+self.limits[command.upper()][1],handler,client]])])
+	  else:
+	    added = False
+	    for j in self.userlimits[user]:
+	      if j[0] == command.upper():
+		j[1] += 1
+		added = True
+		break
+	    if not added:
+	      self.userlimits[user].append([command,1,time.time()+self.limits[command.upper()][1],handler,client])
+    except:
+      pass
       #debug(str(self.userlimits))
 	
       
