@@ -5,6 +5,7 @@ if self.main.sql and cl.sql:
       cl.username = args[1]
       c.send("SERVERMSG Account name changed succesfully\n")
       cl.sync(self.main.database)
+      self.remove(co,"Renaming account")
     else:
       c.send("SERVERMSG Error, an user with that name already exists\n")
 else:
