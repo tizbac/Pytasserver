@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+success = False
 if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clientsusernames.keys():
   if self.main.sql:
     self.main.database.query("SELECT name,password,playtime,accesslevel,bot,banned,casename,id FROM users WHERE name = '%s' AND password = '%s' LIMIT 1" % (args[1].replace("'","").lower(),args[2].replace("'","")))
@@ -17,6 +17,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clien
       if int(r2[3]) >= 3:
 	cl.admin = 1
       c.send("ACCEPTED %s\n" % cl.username)
+      success = True
       good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
       motd = "Hi %s! Welcome to pytasserver\n %i Connected players in %i opened battles" % ( cl.username,len(self.main.clientsusernames.keys()),len(self.main.battles))
       for l in motd.split("\n"):
@@ -59,6 +60,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clien
 	except:
 	  cl.cpu = 0
 	c.send("ACCEPTED %s\n" % cl.username)
+	success = True
 	good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
 	motd = "Hi %s! Welcom to pytasserver\n %i Connected players in %i opened battles\nTo save your progress and/or register channels or get a bot flag you will need to register" % ( args[1],len(self.main.clientsusernames.keys()),len(self.main.battles))
 	for l in motd.split("\n"):
@@ -94,6 +96,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clien
     except:
       cl.cpu = 0
     c.send("ACCEPTED %s\n" % cl.username)
+    success = True
     good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
     motd = "Hi %s! Welcom to pytasserver\n %i Connected players in %i opened battles" % ( args[1],len(self.main.clientsusernames.keys()),len(self.main.battles))
     for l in motd.split("\n"):
@@ -120,7 +123,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clien
       for u in battles[b2].players:
 	c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
     c.send("LOGININFOEND\n")
-elif len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() in self.main.clientsusernames:
+elif len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() in self.main.clientsusernames and not success:
   print args,len(args),cl.lgstatus,args[1].lower() in self.main.clientsusernames
   c.send("DENIED %s\n" % ("Already logged in"))
   self.remove(co,"Bad login attempt")

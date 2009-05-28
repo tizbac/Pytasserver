@@ -78,12 +78,15 @@ class ssock:
     self.sck.close()
   def Flush(self,Final=False):
     if Final:
-      for x in list(self.buf):
-	z = str(x)
-	self.sck.send(z)
-	if self.ist.main.debug:#and z.strip("\n") != "PING":
-	  debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
-	self.buf.remove(x)
+      try:
+	for x in list(self.buf):
+	  z = str(x)
+	  self.sck.send(z)
+	  if self.ist.main.debug:#and z.strip("\n") != "PING":
+	    debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+	  self.buf.remove(x)
+      except:
+	pass
     else:
       try:
 	for x in list(self.buf):
