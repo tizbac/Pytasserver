@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-#print args
+####MUTE channame username minutes mode
+###Description
+##Forbids an user from talking in a channel for some time, only channel operators, founder, or a moderator can use it
 if len(args) >= 3:
   if len(args) >= 4:
     mutetime = float(args[3])*60.0

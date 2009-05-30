@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-#print args
+####DISABLEUNITS unitname1 unitname2 ...
+###Description
+##Sent by founder of the battle to server telling him he disabled one or more units. At least one unit name must be passed as an argument.
+
+##unitname1: Multiple units may follow, but at least one must be present in the arguments list. 
 if len(args) > 1:
   if cl.battle in self.main.battles and self.main.battles[cl.battle].founder == cl.username:
     ue = []

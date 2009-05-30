@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+####FORCELEAVECHANNEL channame username [{reason}]
+###Description
+##Sent by client (moderator) requsting that the user is removed from the channel. User will be notified with FORCELEAVECHANNEL command.
+
 if len(args) >= 3:
   if args[1] in self.main.channels:
     if str(cl.accountid) in self.main.channels[args[1]].operators or cl.accountid == self.main.channels[args[1]].founder or cl.mod == 1:

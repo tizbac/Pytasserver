@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+####KICKFROMBATTLE username
+###Description
+##Sent by founder of the battle when he kicks the client out of the battle. Server remove client from the battle and notify him about it via FORCEQUITBATTLE command.
+
 if len(args) == 2:
   if cl.battle in self.main.battles and self.main.battles[cl.battle].founder == cl.username:
     if args[1] in self.main.battles[cl.battle].players:

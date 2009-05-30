@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-print args
+####SAYPRIVATE username {message}
+###Description
+##Sent by client when he is trying to send a private message to some other client.
+
+###Response
+##Server will respond with a SAYPRIVATE command.
+
 print self.main.clientsusernames[args[1].lower()],self.clients
 if len(args) >= 3 and args[1] in self.main.clientsusernames :
   for h in self.main.handlers:

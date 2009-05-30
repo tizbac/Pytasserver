@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
-if args[1] in self.main.channels:
+####JOIN channame [key]
+###Description
+##Sent by client trying to join a channel.
+
+##key: If channel is locked, then client must supply a correct key to join the channel (clients with access >= Account.ADMIN_ACCESS can join locked channels withouth supplying the key - needed for ChanServ bot).
+
+###Examples
+##JOIN main
+##JOIN myprivatechannel mypassword
+if len(args) >= 2 and args[1] in self.main.channels:
   if not cl.username in self.main.channels[args[1]].users:
     self.main.channels[args[1]].users.append(cl.username)
     c.send("JOIN %s\n" % args[1])

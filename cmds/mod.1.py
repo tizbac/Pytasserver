@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+####MOD username
+###Description
+##Gives moderator flag to an user, only admins can use that command
 if len(args) == 2 and cl.admin == 1:
   uist = self.main.getuserist(args[1])
   if uist:

@@ -1,3 +1,17 @@
+# -*- coding: utf-8 -*-
+####MYSTATUS status
+###Description
+##Sent by client to server telling him his status changed. To figure out if battle is "in-game", client must check in-game status of the host.
+
+##status: A signed integer in text form (e.g. "1234"). Each bit has its meaning:
+
+##    * b0 = in game (0 - normal, 1 - in game)
+##    * b1 = away status (0 - normal, 1 - away)
+##    * b2-b4 = rank (see Account class implementation for description of rank) - client is not allowed to change rank bits himself (only server may set them).
+##    * b5 = access status (tells us whether this client is a server moderator or not) - client is not allowed to change this bit himself (only server may set them).
+##    * b6 = bot mode (0 - normal user, 1 - automated bot). This bit is copied from user's account and can not be changed by the client himself. Bots differ from human players in that they are fully automated and that some anti-flood limitations do not apply to them.
+
+
 try:
   cl.afk = getaway(int(args[1]))
   cl.ingame = getingame(int(args[1]))

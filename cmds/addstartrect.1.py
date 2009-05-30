@@ -1,4 +1,8 @@
-print args
+# -*- coding: utf-8 -*-
+####ADDSTARTRECT allyno left top right bottom
+###Description
+##Sent by host of the battle adding a start rectangle for 'allyno' ally team. See lobby client implementation and Spring docs for more info on this one. "left", "top", "right" and "bottom" refer to a virtual rectangle that is 200x200 in size, where coordinates should be in interval [0, 200].
+
 if len(args) == 6: #Needs more check, it may be used to crash failclient
   b = int(cl.battle)
   if b in self.main.battles:

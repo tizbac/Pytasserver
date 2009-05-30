@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+####REMOVEBOT name
+###Description
+##Removes a bot from the battle.
+
 if len(args) == 2:
   if cl.battle != -1:
     if cl.battle in self.main.battles:

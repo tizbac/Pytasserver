@@ -1,0 +1,121 @@
+<HTML><HEAD><title>Pytasserver implemented commands</HEAD><BODY>
+<br><h1>RING username</h1><h2>Description</h2><b>Sent by client to server when trying to play a "ring" sound to user 'username'. Only privileged users can ring anyone, although "normal" clients can ring only when they are hosting and only players participating in their battle.</b><br>
+<br><h1>SAYBATTLE {message}</h1><h2>Description</h2><b>Sent by client who is participating in a battle to server, who forwards this message to all other clients in the battle. BATTLE_ID is not required since every user can participate in only one battle at the time. If user is not participating in the battle, this command is ignored and is considered invalid</b><br>
+<br><h1>DISABLEUNITS unitname1 unitname2 ...</h1><h2>Description</h2><b>Sent by founder of the battle to server telling him he disabled one or more units. At least one unit name must be passed as an argument.</b><br>
+<b>unitname1: Multiple units may follow, but at least one must be present in the arguments list.</b><br>
+<br><h1>SETINGAMETIME username minutes</h1><h2>Description</h2><b>Sets user's ingame time, only admins can use it</b><br>
+<br><h1>JOINBATTLE BATTLE_ID [password]</h1><h2>Description</h2><b>Sent by a client trying to join a battle. Password is an optional parameter.</b><br>
+<br><h1>CHANNELFOUNDER channame newfounder</h1><h2>Description</h2><b>Changes the founder of the channel</b><br>
+<b>Only the current founder or a moderator can use it</b><br>
+<br><h1>FORCELEAVECHANNEL channame username [{reason}]</h1><h2>Description</h2><b>Sent by client (moderator) requsting that the user is removed from the channel. User will be notified with FORCELEAVECHANNEL command.</b><br>
+<br><h1>MYBATTLESTATUS battlestatus myteamcolor</h1><h2>Description</h2><b>Sent by a client to the server telling him his status in the battle changed.</b><br>
+<b>battlestatus: An integer but with limited range: 0..2147483647 (use signed int and consider only positive values and zero). Number is sent as text. Each bit has its meaning:</b><br>
+<b>    * b0 = undefined (reserved for future use)</b><br>
+<b>    * b1 = ready (0=not ready, 1=ready)</b><br>
+<b>    * b2..b5 = team no. (from 0 to 15. b2 is LSB, b5 is MSB)</b><br>
+<b>    * b6..b9 = ally team no. (from 0 to 15. b6 is LSB, b9 is MSB)</b><br>
+<b>    * b10 = mode (0 = spectator, 1 = normal player)</b><br>
+<b>    * b11..b17 = handicap (7-bit number. Must be in range 0..100). Note: Only host can change handicap values of the players in the battle (with HANDICAP command). These 7 bits are always ignored in this command. They can only be changed using HANDICAP command.</b><br>
+<b>    * b18..b21 = reserved for future use (with pre 0.71 versions these bits were used for team color index)</b><br>
+<b>    * b22..b23 = sync status (0 = unknown, 1 = synced, 2 = unsynced)</b><br>
+<b>    * b24..b27 = side (e.g.: arm, core, tll, ... Side index can be between 0 and 15, inclusive)</b><br>
+<b>    * b28..b31 = undefined (reserved for future use)</b><br>
+<b>myteamcolor: Should be 32-bit signed integer in decimal form (e.g. 255 and not FF) where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR, B = blue, G = green, R = red). Example: 255 stands for $000000FF.</b><br>
+<br><h1> ENABLEUNITS - Not documented </h1><br><br><h1>SETSCRIPTTAGS key1 {value1} key2 {value2} ...</h1><h2>Description</h2><b>Sent by client (battle host), to set script tags in script.txt. Keys may not contain spaces, and are expected to use the '/' character to separate tables (see example). In version 0.35 of TASServer command UPDATEBATTLEDETAILS was completely replaced by this command. The list of attributes that were replaced (with example usage):</b><br>
+<b>    * SETSCRIPTTAGS GAME/StartMetal=1000</b><br>
+<b>    * SETSCRIPTTAGS GAME/StartEnergy=1000</b><br>
+<b>    * SETSCRIPTTAGS GAME/MaxUnits=500</b><br>
+<b>    * SETSCRIPTTAGS GAME/StartPosType=1</b><br>
+<b>    * SETSCRIPTTAGS GAME/GameMode=0</b><br>
+<b>    * SETSCRIPTTAGS GAME/LimitDGun=1</b><br>
+<b>    * SETSCRIPTTAGS GAME/DiminishingMMs=0</b><br>
+<b>    * SETSCRIPTTAGS GAME/GhostedBuildings=1</b><br>
+<b>Though in reality all tags are joined together in a single SETSCRIPTTAGS command. Note that when specifying multiple key+value pairs, they must be separated by TAB characters. See the examples bellow.</b><br>
+<h2>Examples</h2><b>SETSCRIPTTAG GAME/MODOPTIONS/TEST=true</b><br>
+<b>SETSCRIPTTAG GAME/StartMetal=1000 GAME/StartEnergy=1000</b><br>
+<b>See whitespaces: SETSCRIPTTAG GAME/StartMetal[SPACE]1000[TAB]GAME/StartEnergy[SPACE]1000</b><br>
+<br><h1>ADDSTARTRECT allyno left top right bottom</h1><h2>Description</h2><b>Sent by host of the battle adding a start rectangle for 'allyno' ally team. See lobby client implementation and Spring docs for more info on this one. "left", "top", "right" and "bottom" refer to a virtual rectangle that is 200x200 in size, where coordinates should be in interval [0, 200].</b><br>
+<br><h1> REGISTERCHANNEL - Not documented </h1><br><br><h1>REGISTER username passhash</h1><b>Client sends this command when trying to register a new account. Note that client mustn't already be logged in, or else server will deny his request. If server is running in LAN_MODE, this command will be ignored.<br></b><br>
+<b>password: Must be sent in encoded form (MD5 hash in base-64 form).<br></b><br>
+<h2>Response</h2><b>Server will respond with either REGISTRATIONDENIED or REGISTRATIONACCEPTED command.<br></b><br>
+<h2>Examples</h2><b>REGISTER Johnny Gnmk1g3mcY6OWzJuM4rlMw==</b><br>
+<br><h1>REMOVESTARTRECT allyno</h1><h2>Description</h2><b>Sent by host of the battle removing a start rectangle for 'allyno' ally team. See client implementation and Spring docs for more info on this one.</b><br>
+<br><h1>CHANNELS</h1><h2>Description</h2><b>Sent by client when requesting channels list</b><br>
+<h2>Response</h2><b>Server will respond with a series of CHANNEL command, ending it with ENDOFCHANNELS command.</b><br>
+<h2>Examples</h2><b>JOIN main</b><br>
+<br><h1>DEOP channame user</h1><h2>Description</h2><b>Remove the user from channel operator list, only the founder or a moderator can use it</b><br>
+<br><h1>MUTE channame username minutes mode</h1><h2>Description</h2><b>Forbids an user from talking in a channel for some time, only channel operators, founder, or a moderator can use it</b><br>
+<br><h1>UPDATEBATTLEINFO SpectatorCount locked maphash {mapname}	 Source: client</h1><h2>Description</h2><b>Sent by the founder of the battle telling the server some of the "outside" parameters of the battle changed.</b><br>
+<b>locked: A boolean (0 or 1). Note that when client creates a battle, server assumes it is unlocked (by default). Client must make sure it actually is.</b><br>
+<b>maphash: A signed 32-bit integer. See OPENBATTLE command for more info.</b><br>
+<b>mapname: Must NOT contain file extension!</b><br>
+<br><h1>HANDICAP username value</h1><h2>Description</h2><b>Sent by founder of the battle changing username's handicap value (of his battle status). Only founder can change other users handicap values (even they themselves can't change it).</b><br>
+<b>value: Must be in range [0, 100] (inclusive).</b><br>
+<br><h1>UNMOD</h1><h2>Description</h2><b>Removes any moderator-admin privilege from the selected account, needs admin privilege</b><br>
+<br><h1> UPDATE - Not documented </h1><br><br><h1> UNMUTE - Not documented </h1><br><br><h1>JOIN channame [key]</h1><h2>Description</h2><b>Sent by client trying to join a channel.</b><br>
+<b>key: If channel is locked, then client must supply a correct key to join the channel (clients with access >= Account.ADMIN_ACCESS can join locked channels withouth supplying the key - needed for ChanServ bot).</b><br>
+<h2>Examples</h2><b>JOIN main</b><br>
+<b>JOIN myprivatechannel mypassword</b><br>
+<br><h1>LEAVEBATTLE</h1><h2>Description</h2><b>Sent by the client when he leaves a battle. Also sent by a founder of the battle when he closes the battle.</b><br>
+<br><h1>PING</h1><b>Client should send this command on every few seconds to maintain constant connection to the server. Server will assume timeout occured if it does not hear from client for more than 30 seconds. To figure out how long does a reply take, use message ID with this command.</b><br>
+<br><h1>REMOVEBOT name</h1><h2>Description</h2><b>Removes a bot from the battle.</b><br>
+<br><h1>ADDBOT name battlestatus teamcolor {AIDLL}</h1><h2>Description</h2><b>With this command client can add bots to the battle.</b><br>
+<b>teamcolor: Should be 32-bit signed integer in decimal system (e.g. 255 and not FF) where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR, B = blue, G = green, R = red).</b><br>
+<br><h1>LOGIN username password cpu localIP {lobby name and version} [{userID}]	 Source: client</h1><h2>Description</h2><b>Sent by client when he is trying to log on the server. Server may respond with ACCEPTED or DENIED command. Note that if client hasn't yet confirmed the server agreement, then server will send the agreement to client upon receiving LOGIN command (LOGIN command will be ignored - client should resend LOGIN command once user has agreed to the agreement or disconnect from the server if user has rejected the agreement).</b><br>
+<b>Also see LOGININFOEND command.</b><br>
+<b>password: Should be sent in encoded form (MD5 hash in base-64 form). Note that when server is running in lan mode, you can specify any username and password (password will be ignored, but you must send some string anyway - you mustn't ommit it!)</b><br>
+<b>cpu: An integer denoting the speed of client's processor in MHz (or value of x+ tag if AMD). Client should leave this value at 0 if it can't figure out its CPU speed.</b><br>
+<b>localIP: As localIP client should send his local IP (e.g. 192.168.x.y, or whatever it uses) so server can forward local IPs to clients behind same NAT (this resolves some of the host/joining issues). If client is unable to determine his local IP, he should send "*" instead.</b><br>
+<b>userID: This is a unique user identification number provided by the client-side software. It should be an unsigned integer encoded in hexadecimal form (see examples). Note that this parameter is optional - by default it is not used/set. Server will send a ACQUIREUSERID command to tell the client that he must provide a user ID, if needed. However, if client-side lobby program was using user ID before, it should send it along with LOGIN command.</b><br>
+<h2>Examples</h2><b>LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 192.168.1.100 TASClient 0.30</b><br>
+<b>LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 * TASClient 0.30</b><br>
+<b>LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 * TASClient 0.30 FA23BB4A</b><br>
+<br><h1>CHANNELTOPIC channame {topic}</h1><h2>Description</h2><b>Sent by privileged user who is trying to change channel's topic. Use * as topic if you wish to disable it.</b><br>
+<br><h1>FORCEALLYNO username teamno</h1><h2>Description</h2><b>Sent by founder of the battle when he is trying to force some other client's ally number to 'allyno'. Server will update client's battle status automatically.</b><br>
+<br><h1>UPDATEBOT name battlestatus teamcolor</h1><h2>Description</h2><b>Sent by client when he is trying to update status of one of his own bots (only bot owner and battle host may update bot).</b><br>
+<b>battlestatus: Similar to that of the normal client's, see MYBATTLESTATUS for more info.</b><br>
+<b>teamcolor: Should be 32-bit signed integer in decimal system (e.g. 255 and not FF) where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR, B = blue, G = green, R = red).</b><br>
+<br><h1>FORCETEAMCOLOR username color</h1><h2>Description</h2><b>Sent by founder of the battle when he is trying to force some other client's team color to 'color'. Server will update client's battle status automatically.</b><br>
+<b>color: Should be a 32-bit signed integer in decimal form (e.g. 255 and not FF) where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR, B = blue, G = green, R = red). Example: 255 stands for $000000FF.</b><br>
+<br><h1> RELOADLIMITS - Not documented </h1><br><br><h1> LOBBYFEATURESUPPORTS - Not documented </h1><br><br><h1>FORCESPECTATORMODE username</h1><h2>Description</h2><b>Sent by founder of the battle when he is trying to force some other client's mode to spectator. Server will update client's battle status automatically.</b><br>
+<br><h1>SAY channame {message}</h1><h2>Description</h2><b>Sent by client when he is trying to say something in a specific channel. Client must first join the channel before he can receive or send messages to that channel.</b><br>
+<h2>Response</h2><b>SAID</b><br>
+<br><h1>OP channame username</h1><h2>Description</h2><b>Adds the user to channel's operator list, only channel founder or moderators can use it</b><br>
+<br><h1>MUTELIST channame</h1><h2>Description</h2><b>Sent by client when requesting mute list of a channel.</b><br>
+<h2>Examples</h2><b>MUTELIST main</b><br>
+<br><h1>OPENBATTLE type natType password port maxplayers hashcode rank maphash {map} {title} {modname}</h1><h2>Description</h2><b>Sent by client when he is trying to open a new battle. The client becomes a founder of this battle, if command is successful (see Response section).</b><br>
+<b>type: Can be 0 or 1 (0 = normal battle, 1 = battle replay)</b><br>
+<b>natType: NAT traversal method used by the host. Must be a number (0 means no NAT traversal technique should be applied).</b><br>
+<b>password: Must be "*" if founder does not wish to have password-protected game.</b><br>
+<b>hashcode: A signed 32-bit integer (acquired via unitsync.dll).</b><br>
+<b>maphash: A signed 32-bit integer as returned from unitsync.dll.</b><br>
+<h2>Response</h2><b>Client is notified about this command's success via OPENBATTLE/OPENBATTLEFAILED commands.</b><br>
+<br><h1>SAYBATTLEEX {message}</h1><h2>Description</h2><b>Sent by any client participating in a battle when he wants to say something in "/me" irc style. Server can forge this command too (for example when founder of the battle kicks a user, server uses SAYBATTLEEX saying founder kicked a user).</b><br>
+<br><h1>RENAMEACCOUNT newUsername</h1><h2>Description</h2><b>Will rename current account which is being used by the user to newUsername. User has to be logged in for this to work. After server renames the account, it will disconnect him.</b><br>
+<h2>Response</h2><b>No response is prescribed, although server may reply with some SERVERMSG command.</b><br>
+<h2>Examples</h2><b>RENAMEACCOUNT Johnny2</b><br>
+<br><h1>CHANGEPASSWORD oldPassword newPassword	 Source: client</h1><h2>Description</h2><b>Will change password of client's account (which he is currently using).</b><br>
+<h2>Response</h2><b>No response is prescribed, although server may reply with some SERVERMSG command.</b><br>
+<br><h1>KICKFROMBATTLE username</h1><h2>Description</h2><b>Sent by founder of the battle when he kicks the client out of the battle. Server remove client from the battle and notify him about it via FORCEQUITBATTLE command.</b><br>
+<br><h1>SAYPRIVATE username {message}</h1><h2>Description</h2><b>Sent by client when he is trying to send a private message to some other client.</b><br>
+<h2>Response</h2><b>Server will respond with a SAYPRIVATE command.</b><br>
+<br><h1>EXIT</h1><h2>Description</h2><b>This command is used at exit to make the server remove the client without errors like "Connection reset by peer"</b><br>
+<br><h1>SETBOTMODE username 0-1</h1><h2>Description</h2><b>Sets or unsets the bot flag on the account, only admins can use that command</b><br>
+<br><h1>MOD username</h1><h2>Description</h2><b>Gives moderator flag to an user, only admins can use that command</b><br>
+<br><h1>LEAVE channame</h1><h2>Description</h2><b>Sent by client when he is trying to leave a channel. When client is disconnected, he is automatically removed from all channels.</b><br>
+<br><h1>ENABLEUNITS unitname1 unitname2 ...</h1><h2>Description</h2><b>Sent by founder of the battle to server telling him he enabled one or more previous disabled units. At least one unit name must be passed as an argument.</b><br>
+<b>unitname1: Multiple units may follow, but at least one must be present in the arguments list.</b><br>
+<br><h1>SAYEX channame {message}</h1><h2>Description</h2><b>Sent by any client when he is trying to say something in "/me" irc style. Also see SAY command.</b><br>
+<br><h1>FORCETEAMNO username teamn</h1><h2>Description</h2><b>Sent by founder the of battle when he is trying to force some other client's team number to 'teamno'. Server will update client's battle status automatically.</b><br>
+<br><h1> RELOADCOMMANDS - Not documented </h1><br><br><h1>ADMIN accountname</h1><h2>Description</h2><b>Give to the account admin rights</b><br>
+<b>Only Admins can use it</b><br>
+<br><h1>MYSTATUS status</h1><h2>Description</h2><b>Sent by client to server telling him his status changed. To figure out if battle is "in-game", client must check in-game status of the host.</b><br>
+<b>status: A signed integer in text form (e.g. "1234"). Each bit has its meaning:</b><br>
+<b>    * b0 = in game (0 - normal, 1 - in game)</b><br>
+<b>    * b1 = away status (0 - normal, 1 - away)</b><br>
+<b>    * b2-b4 = rank (see Account class implementation for description of rank) - client is not allowed to change rank bits himself (only server may set them).</b><br>
+<b>    * b5 = access status (tells us whether this client is a server moderator or not) - client is not allowed to change this bit himself (only server may set them).</b><br>
+<b>    * b6 = bot mode (0 - normal user, 1 - automated bot). This bit is copied from user's account and can not be changed by the client himself. Bots differ from human players in that they are fully automated and that some anti-flood limitations do not apply to them.</b><br>
+<br><h1>CHANNELINFO channel</h1><h2>Description</h2><b>Gives informations about the channel like ChanServ !info command with SERVERMSG</b><br>
+<br><h1>KICKUSER username {reason}</h1><h2>Description</h2><b>Kicks the user from the server, only a moderator can use it</b><br>
+</BODY></HTML>

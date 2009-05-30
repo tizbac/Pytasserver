@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+####JOINBATTLE BATTLE_ID [password]
+###Description
+##Sent by a client trying to join a battle. Password is an optional parameter.
+
 if len(args) == 2:
   if cl.battle == -1:
     if int(args[1]) in self.main.battles and self.main.battles[int(args[1])].locked == 0:

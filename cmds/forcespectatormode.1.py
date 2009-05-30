@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+####FORCESPECTATORMODE username
+###Description
+##Sent by founder of the battle when he is trying to force some other client's mode to spectator. Server will update client's battle status automatically. 
 if len(args) == 2:
   if cl.battle in self.main.battles and self.main.battles[cl.battle].founder == cl.username:
     if args[1] in self.main.battles[cl.battle].players:

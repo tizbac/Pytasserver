@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+####LEAVEBATTLE
+###Description
+##Sent by the client when he leaves a battle. Also sent by a founder of the battle when he closes the battle.
+
 for b in dict(self.main.battles):
   if b in self.main.battles:
     ba = self.main.battles[b]

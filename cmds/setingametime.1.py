@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-
+####SETINGAMETIME username minutes
+###Description
+##Sets user's ingame time, only admins can use it
 if len(args) == 3 and cl.admin == 1:# SETINGAMETIME [playername] [minutes]
   uist = self.main.getuserist(args[1])
   if uist:

@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+####RENAMEACCOUNT newUsername
+###Description
+##Will rename current account which is being used by the user to newUsername. User has to be logged in for this to work. After server renames the account, it will disconnect him.
+
+###Response
+##No response is prescribed, although server may reply with some SERVERMSG command.
+
+###Examples
+##RENAMEACCOUNT Johnny2
 if self.main.sql and cl.sql:
   if len(args) == 2:
     if not self.main.getaccountid(args[1].lower()):

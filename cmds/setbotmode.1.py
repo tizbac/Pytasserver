@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+####SETBOTMODE username 0-1
+###Description
+##Sets or unsets the bot flag on the account, only admins can use that command
 if len(args) == 3 and cl.admin == 1:
   uist = self.main.getuserist(args[1])
   if uist:

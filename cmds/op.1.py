@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+####OP channame username
+###Description
+##Adds the user to channel's operator list, only channel founder or moderators can use it
 if len(args) == 3:
   if args[2].lower() in self.main.clientsusernames and args[1] in self.main.channels:
     cli = self.main.allclients[self.main.clientsusernames[args[2].lower()].sck]

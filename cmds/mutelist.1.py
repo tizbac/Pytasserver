@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+####MUTELIST channame
+###Description
+##Sent by client when requesting mute list of a channel.
+
+###Examples
+##MUTELIST main
 if len(args) > 1:
   if args[1] in self.main.channels:
     cha = self.main.channels[args[1]]

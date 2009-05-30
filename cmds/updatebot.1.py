@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
+####UPDATEBOT name battlestatus teamcolor
+###Description
+##Sent by client when he is trying to update status of one of his own bots (only bot owner and battle host may update bot).
+
+##battlestatus: Similar to that of the normal client's, see MYBATTLESTATUS for more info.
+
+##teamcolor: Should be 32-bit signed integer in decimal system (e.g. 255 and not FF) where each color channel should occupy 1 byte (e.g. in hexdecimal: $00BBGGRR, B = blue, G = green, R = red).
+
 if len(args) == 4:
   if cl.battle != -1:
     if cl.battle in self.main.battles:
@@ -12,10 +19,10 @@ if len(args) == 4:
 	  else:
 	    c.send("SERVERMSG Invalid values on UPDATEBOT command\n")
 	else:
-	  c.send("SERVERMSG You cannot remove bots if you are not the owner and you are not the host\n")
+	  c.send("SERVERMSG You cannot update bots if you are not the owner and you are not the host\n")
       else:
 	c.send("SERVERMSG Bot doesn't exist in battle\n")
     else:
       c.send("SERVERMSG Critical Error: Your account has an invalid battle id, this is usually caused by server problems, relogin to fix it\n")
   else:
-    c.send("SERVERMSG You cannot remove bots if you aren't in a battle or hosting\n")
+    c.send("SERVERMSG You cannot update bots if you aren't in a battle or hosting\n")

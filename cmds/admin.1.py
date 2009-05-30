@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+####ADMIN accountname
+###Description
+##Give to the account admin rights
+##Only Admins can use it
 if len(args) == 2 and cl.admin == 1:
   uist = self.main.getuserist(args[1])
   if uist:

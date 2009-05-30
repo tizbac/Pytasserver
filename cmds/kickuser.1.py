@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-
+####KICKUSER username {reason}
+###Description
+##Kicks the user from the server, only a moderator can use it
 if len(args) >= 2 and cl.mod == 1:
 	if len(args) >= 3:
 		reason = ' '.join(args[2:])

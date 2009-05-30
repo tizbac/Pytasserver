@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+####RING username
+###Description
+##Sent by client to server when trying to play a "ring" sound to user 'username'. Only privileged users can ring anyone, although "normal" clients can ring only when they are hosting and only players participating in their battle.
+
 if len(args) == 2:
   ri = False
   if cl.battle in self.main.battles:
