@@ -18,6 +18,7 @@ from colors import *
 import _mysql as mysql
 import Handler
 import zlib
+from BanClient import *
 import threading
 from CommandLimit import *
 '''class Battle:
@@ -281,11 +282,36 @@ class Main:
     else:
       error("getaccountbyid(%s) : MYSQL is not enabled" %str(id))
     return accname
+  def validateusername(self,uname):
+    if len(uname) <= self.maxunamelen:
+      if bool(self.unamer.match(uname)):
+	return (True,"OK")
+      else:
+	return (False,"Username must match regex %s" % self.unamers)
+    else:
+      return (False,"Max username length is %i characters" % self.maxunamelen)
   def run(self):
     self.conf = readconfigfile("Server.conf")
     self.sql = False
     self.au = False
+    self.unamers = "\A[a-zA-Z-0-9]+?\Z"
+    self.unamer = re.compile("\A[a-zA-Z-0-9]+?\Z")
     self.climit = "commandlimit" in self.conf and self.conf["commandlimit"] == "1"
+    self.bcl = "banlistserverenabled" in self.conf and self.conf["banlistserverenabled"] == "1"
+    if "allowusernameregex" in self.conf:
+    	try:
+    		self.unamer = re.compile(self.conf["usernameregex"])
+		self.unamers = self.conf["usernameregex"]
+    	except:
+		error("Username regex %s failed to compile, using \A[a-zA-Z-0-9]+?\Z !!!" % self.conf["usernameregex"])
+		self.unamer = re.compile("\A[a-zA-Z-0-9]+?\Z")
+    
+    if self.bcl:
+      self.banlistserv = BanClient(self.conf["banlistserverhost"],int(self.conf["banlistserverport"]))
+    self.maxunamelen = 32
+    if "maxusernamelen" in self.conf:
+      if self.conf["maxusernamelen"].isdigit():
+	self.maxunamelen = int(self.conf["maxusernamelen"])
     if self.climit:
       self.cmdlimit = CommandsLimitHandler(self)
     else:
@@ -355,26 +381,37 @@ class Main:
       while 1:
 	cs,ip = self.ms.accept()
 	good("New connection from %s" %  str(ip))
-	try:
-	  cs.setblocking(0)
-	  cs.send("TASServer %s %s %s 0\n" % (self.conf["serverversion"],self.conf["springversion"],self.conf["natport"]))
-	  hln = dict()
-	  l = 900000
-	  for h in self.handlers:
-	    hln.update([(len(h.clients.keys()),h)])
-	  for k in hln:
-	    if k < l:
-	      lh = hln[k]
-	      l = k
-	  ist = Handler.Client(ip,cs,lh)
-	  lh.clients.update([(cs,ist)])
-	  lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
-	  self.allclients.update([(cs,ist)])
-	  #print "Handler %i: %s" % (lh.id,str(lh.clients))
-	  good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
-	  
-	except:
-	  error(traceback.format_exc())
+	rej = False
+	if self.bcl:
+	  if self.banlistserv.ipisbanned(ip[0]):
+	    notice("IP %s rejected by ban list server, killing connection" % ip[0])
+	    cs.setblocking(0)
+	    try:
+	      cs.close()
+	    except:
+	      pass
+	    rej = True
+	if not rej:
+	  try:
+	    cs.setblocking(0)
+	    cs.send("TASServer %s %s %s 0\n" % (self.conf["serverversion"],self.conf["springversion"],self.conf["natport"]))
+	    hln = dict()
+	    l = 900000
+	    for h in self.handlers:
+	      hln.update([(len(h.clients.keys()),h)])
+	    for k in hln:
+	      if k < l:
+		lh = hln[k]
+		l = k
+	    ist = Handler.Client(ip,cs,lh)
+	    lh.clients.update([(cs,ist)])
+	    lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
+	    self.allclients.update([(cs,ist)])
+	    #print "Handler %i: %s" % (lh.id,str(lh.clients))
+	    good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
+	    
+	  except:
+	    error(traceback.format_exc())
     except KeyboardInterrupt:
       self.broadcast("SERVERMSGBOX Server received SIGINT, Exiting\n")
       for h in self.handlers:
