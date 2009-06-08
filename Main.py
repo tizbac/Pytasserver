@@ -200,7 +200,17 @@ class Main:
     self.ms = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     self.msGZ = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     self.debug = "d" in flags
-    
+  def syncallthread(self):
+    if self.sql:
+      while 1:
+	notice("Saving all users logged in...")
+	for h in self.handlers:
+	  for cll in dict(h.clients):
+	    cl = h.clients[cll]
+	    cl.sync(self.database)
+	good("Done saving logged in users")
+	time.sleep(float(self.conf["syncallinterval"]))
+	
   def connectionpingthread(self):
     while 1:
       try:
@@ -406,9 +416,10 @@ class Main:
     while i < int(self.conf["handlers"]):
       self.handlers.append(Handler.Handler(self,i+1))
       i += 1
-    
+    thread.start_new_thread(self.syncallthread,())
     for h in self.handlers:
       thread.start_new_thread(h.ml,())
+      
     good("Started %i handlers" % len(self.handlers))
     
     self.ms.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR,self.ms.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1 )

@@ -12,5 +12,5 @@ if len(args) == 6: #Needs more check, it may be used to crash failclient
 	self.main.broadcastbattle(b,"REMOVESTARTRECT %i\n" % int(args[1]))
 	debug("Startrect %i on battle %i already exists, removed it!" % (int(args[1]),int(b)))
       self.main.battles[b].startrects.update([(int(args[1]),StartRect(int(args[1]),args[2],args[3],args[4],args[5]))])
-      debug(str(self.main.battles[b].startrects))
+      #debug(str(self.main.battles[b].startrects))
       self.main.broadcastbattle(b,self.main.battles[b].startrects[int(args[1])].forgeaddstartrect())

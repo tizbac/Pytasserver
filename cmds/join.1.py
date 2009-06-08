@@ -22,7 +22,8 @@ if len(args) >= 2:
 	    bstr = "%i%i%i" % (int(int(cli.accountid) in self.main.channels[args[1]].operators),int(int(cli.accountid) in self.main.channels[args[1]].mutes),int(cli.username == self.main.channels[args[1]].founder))
 	    c.send("CLIENTCHANNELSTATUS %s %s %i\n" % (args[1],cli.username,bin2dec(bstr)))   #CLIENTCHANNELSTATUS channel user status
 	self.main.broadcastchannel(args[1],"JOINED %s %s\n" % (args[1],cl.username),co)
-	c.send("CHANNELTOPIC %s %s %f %s\n" % (args[1],self.main.channels[args[1]].topicsetby,self.main.channels[args[1]].topichangedtime,self.main.channels[args[1]].topic))
+	if self.main.channels[args[1]].topic != "*":
+	  c.send("CHANNELTOPIC %s %s %f %s\n" % (args[1],self.main.channels[args[1]].topicsetby,self.main.channels[args[1]].topichangedtime,self.main.channels[args[1]].topic))
       else:
 	c.send("SERVERMSG *** Error: cannot join #%s, invalid key\n" % args[1])
     else:
@@ -36,4 +37,5 @@ if len(args) >= 2:
     c.send("JOIN %s\n" % args[1])
     self.main.channels[args[1]].users.append(cl.username)
     c.send("CLIENTS %s %s\n" % ( args[1], ' '.join(self.main.channels[args[1]].users)))
-    c.send("CHANNELTOPIC %s %s %f %s\n" % (args[1],self.main.channels[args[1]].topicsetby,self.main.channels[args[1]].topichangedtime,self.main.channels[args[1]].topic))#self.main.broadcastchannel(args[1],"JOINED %s %s\n" % (args[1],cl.username),c)
+    if self.main.channels[args[1]].topic != "*":
+      c.send("CHANNELTOPIC %s %s %f %s\n" % (args[1],self.main.channels[args[1]].topicsetby,self.main.channels[args[1]].topichangedtime,self.main.channels[args[1]].topic))#self.main.broadcastchannel(args[1],"JOINED %s %s\n" % (args[1],cl.username),c)

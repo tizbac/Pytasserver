@@ -130,9 +130,9 @@ class BattleStatus:
     self.sync = getsync(st)
     self.side = getside(st)
     self._28_ = 0
-    print status
-    for e in dir(self):
-      exec("g = self.%s" % e)
+    #print status
+    #for e in dir(self):
+    #  exec("g = self.%s" % e)
       #debug( "self.%s = %s" % (e,str(g)))
   def calc(self):
     bstr = "0%i%s%s%i%s0000%s%s0000" % (int(self.ready),dec2bin(self.teamno,4),dec2bin(self.allyno,4),int(self.mode),dec2bin(self.handicap,7),dec2bin(self.sync,2),dec2bin(self.side,4))
@@ -168,6 +168,7 @@ class Client:
     self.ist = ist
     self.sso = ssock(sock,self.ist)
     self.ingame = 0
+    self.ptimecounter = None
     self.ptime = 0
     self.teamcolor = "0"
     self.password = ""
@@ -374,7 +375,7 @@ class Handler:
 		while not cl.inbuf.endswith("\n"):
 		  d = co.recv(1024)
 		  if len(d) == 0:
-		    self.remove(co,"Read Error: Connection reset by peer")
+		    self.remove(co,"Read Error 104: Connection reset by peer")
 		    break
 		  cl.inbuf += d
 	    except socket.error:

@@ -14,6 +14,15 @@
 
 try:
   cl.afk = getaway(int(args[1]))
+  if cl.ingame == 0 and getingame(int(args[1])) == 1:
+    if cl.battle != -1:
+      cl.ptimecounter = [time.time(),cl.battle]
+    else:
+      cl.ptimecounter = None
+  if cl.ingame == 1 and getingame(int(args[1])) == 0:
+    if cl.battle != -1 and cl.ptimecounter[1] == cl.battle:
+      cl.ptime += int(time.time() - cl.ptimecounter[0]) / 60
+    cl.ptimecounter = None
   cl.ingame = getingame(int(args[1]))
   newstatus = cl.getstatus()
   self.main.broadcast("CLIENTSTATUS %s %i\n" % (cl.username,newstatus))

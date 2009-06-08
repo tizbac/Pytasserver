@@ -66,6 +66,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clien
 
     elif not self.main.au:
       #print str(args)+" LOGIN failed"
+      cl.loginlock.release()
       c.send("DENIED %s\n" % ("Bad username/password"))
       self.remove(co,"Bad login attempt, Unregistered login disabled")
     else:
@@ -109,9 +110,11 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clien
 	      c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
 	  c.send("LOGININFOEND\n")
 	else:
+	  cl.loginlock.release()
 	  c.send("DENIED %s\n" % (val[1]))
 	  self.remove(co,"Bad login attempt")
       else:
+	cl.loginlock.release()
 	c.send("DENIED %s\n" % ("Username exists in database"))
 	self.remove(co,"Bad login attempt")
   else:
@@ -153,13 +156,15 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clien
       c.send("LOGININFOEND\n")
     else:
       c.send("DENIED %s\n" % (val[1]))
+      cl.loginlock.release()
       self.remove(co,"Bad login attempt")
 elif len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() in self.main.clientsusernames and not success:
   print args,len(args),cl.lgstatus,args[1].lower() in self.main.clientsusernames
   c.send("DENIED %s\n" % ("Already logged in"))
+  cl.loginlock.release()
   self.remove(co,"Bad login attempt")
 else:
-  print args,len(args),cl.lgstatus,args[1].lower() in self.main.clientsusernames
+ # print args,len(args),cl.lgstatus,args[1].lower() in self.main.clientsusernames
+  cl.loginlock.release()
   self.remove(co,"Bad data")
-
 cl.loginlock.release()
