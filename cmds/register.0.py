@@ -13,8 +13,8 @@ if len(args) == 3 and cl.lgstatus == 0 and self.main.sql:
   val = self.main.validateusername(args[1])
   if val[0]:
     if res.num_rows() == 0:
-      self.main.database.query("INSERT INTO users (name,password,playtime,accesslevel,bot,banned,casename) VALUES ('%s','%s',0,1,0,0,'%s')" %
-      (args[1].replace("'","").lower(),args[2].replace("'",""),args[1].replace("'","")),False)
+      self.main.database.query("INSERT INTO users (name,password,playtime,accesslevel,bot,banned,casename,registrationdate) VALUES ('%s','%s',0,1,0,0,'%s',%i)" %
+      (args[1].replace("'","").lower(),args[2].replace("'",""),args[1].replace("'",""),int(time.time())),False)
       c.send("REGISTRATIONACCEPTED\n")
     else:
       c.send("REGISTRATIONDENIED User already exists\n")

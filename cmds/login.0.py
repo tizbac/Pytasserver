@@ -17,9 +17,12 @@
 ##LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 * TASClient 0.30
 ##LOGIN Johnny Gnmk1g3mcY6OWzJuM4rlMw== 3200 * TASClient 0.30 FA23BB4A
 success = False
+if not cl.loggingin:
+  cl.loggingin = True
+  cl.loginlock.acquire()
 if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clientsusernames:
   if self.main.sql:
-    self.main.database.query("SELECT name,password,playtime,accesslevel,bot,banned,casename,id FROM users WHERE name = '%s' AND password = '%s' LIMIT 1" % (args[1].replace("'","").lower(),args[2].replace("'","")))
+    self.main.database.query("SELECT name,password,playtime,accesslevel,bot,banned,casename,id FROM users WHERE name = '%s' AND password = '%s' LIMIT 1" % (args[1].replace("'","\\'").lower(),args[2].replace("'","\\'")))
     res = self.main.database.store_result()
     if res.num_rows() >= 1:
       r2 = res.fetch_row()[0]
@@ -29,6 +32,7 @@ if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clien
       cl.sql = True
       cl.ptime = int(r2[2])
       cl.bot = int(r2[4])
+      cl.lastlogin = int(time.time())
       if int(r2[3]) >= 2:
 	cl.mod = 1
       if int(r2[3]) >= 3:
@@ -157,3 +161,5 @@ elif len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() in self.main.clients
 else:
   print args,len(args),cl.lgstatus,args[1].lower() in self.main.clientsusernames
   self.remove(co,"Bad data")
+
+cl.loginlock.release()

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import socket,string,thread,time
+import socket,string,thread,time,threading
 import sys,traceback,pdb,re,os
 import base64,md5,commands,ip2country
 import select,os
@@ -82,8 +82,8 @@ class ssock:
 	for x in list(self.buf):
 	  z = str(x)
 	  self.sck.send(z)
-	  if self.ist.main.debug:#and z.strip("\n") != "PING":
-	    debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+	 # if self.ist.main.debug:#and z.strip("\n") != "PING":
+	   # debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))) NOTE: Temporarily broken
 	  self.buf.remove(x)
       except:
 	pass
@@ -92,8 +92,8 @@ class ssock:
 	for x in list(self.buf):
 	  z = str(x)
 	  self.sck.send(z)
-	  if self.ist.main.debug:#and z.strip("\n") != "PING":
-	    debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+	  #if self.ist.main.debug:#and z.strip("\n") != "PING":
+	    #debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
 	  self.buf.remove(x)
       except socket.error:
 	se = sys.exc_value[0]
@@ -149,7 +149,8 @@ class Client:
     #
     #
     #
-    
+    self.loginlock = threading.Lock()
+    self.loggingin = False
     self.ip = ip
     self.sql = False
     self.lgstatus = 0 # 0 Just connected,1: Logged in
@@ -157,6 +158,7 @@ class Client:
     self.afk = 0
     self.rank = 0
     self.bs = 0
+    self.lastlogin = 0.0
     self.lastbsreset = time.time()
     self.battlestatus = "0"
     self.mod = 0
@@ -208,7 +210,7 @@ class Client:
       al = 2
     if self.admin == 1:
       al = 3
-    db.query("UPDATE users SET name = '%s', password = '%s', playtime = %i, accesslevel = %i, bot = %i, banned = %i, casename = '%s' WHERE id = %i" % (self.username.lower().replace("'","\\'"),self.password,self.ptime,al,self.bot,0,self.username.replace("'","\\'"),self.accountid),False)
+    db.query("UPDATE users SET name = '%s', password = '%s', playtime = %i, accesslevel = %i, bot = %i, banned = %i, casename = '%s', lastlogin = %i, lastip = '%s' WHERE id = %i" % (self.username.lower().replace("'","\\'"),self.password,self.ptime,al,self.bot,0,self.username.replace("'","\\'"),int(self.lastlogin),self.ip[0],self.accountid),False)
     
     
 class Handler:
@@ -250,6 +252,7 @@ class Handler:
     try:
       
       if c in self.clients:
+	self.clients[c].loginlock.acquire()
 	self.clients[c].sso.Flush(True)
 	if self.clients[c].lgstatus > 0:  
 	  try:
@@ -298,7 +301,8 @@ class Handler:
 	  try:
 	    self.clients[c].sync(self.main.database)
 	  except:
-	    error("Cannot sync player <%s> to database" % self.clients[c].username)
+	    error("Cannot sync player <%s> to database: %s" % (self.clients[c].username,traceback.format_exc()))
+	self.clients[c].loginlock.release()
 	del self.clients[c]
     except:
       print '-'*60

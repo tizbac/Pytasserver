@@ -95,9 +95,9 @@ class Channel:
   topicsetby = "Nobody"
   def __del__(self):
     debug("Channel %s unloaded from memory" % self.name)
-  def __init__(self,founder,name,mutes=dict(),topic="",operators=[],dbid=0):
+  def __init__(self,founder,name,mutes=dict(),topic="",operators=[],dbid=0,key="*"):
     self.name = name
-
+    self.key = key
     self.dbid = dbid
     self.topicsetby = "Nobody"
     self.topichangedtime = 0.0
@@ -125,8 +125,8 @@ class Channel:
       else:
 	error("Founder of channel %s does not exist in database !!!!!!!!!!" % self.name)
 	return"""
-      db.query("INSERT INTO channels (name,founder,mutes,operators,topic) VALUES ('%s','%s','%s','%s','%s')" %
-      (self.name.replace("'",""),str(self.founder),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n")),False)
+      db.query("INSERT INTO channels (name,founder,mutes,operators,topic,password) VALUES ('%s','%s','%s','%s','%s','%s')" %
+      (self.name.replace("'",""),str(self.founder),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.key.replace("'","\\'")),False)
       db.query("SELECT id,name FROM channels WHERE name = '%s' LIMIT 1" % self.name.replace("'","\\'"))
       res = db.store_result()
       if res.num_rows() > 0:
@@ -138,21 +138,29 @@ class Channel:
     for m in self.mutes:
       mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
     ops = ' '.join(self.operators)
-    db.query("UPDATE channels SET name = '%s',founder = '%s',mutes = '%s',operators = '%s', topic = '%s' WHERE id = %i" %
-    (self.name.replace("'",""),str(self.founder),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.dbid),False)
+    db.query("UPDATE channels SET name = '%s',founder = '%s',mutes = '%s',operators = '%s', topic = '%s', password = '%s' WHERE id = %i" %
+    (self.name.replace("'",""),str(self.founder),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.key.replace("'","\\'"),self.dbid),False)
 class sd: #Makes mysql module threadsafe
-  def __init__(self,host,username,password,database):
+  def __init__(self,host,username,password,database,debug=False):
     self.uname = username
     self.pw = password
+    self.debug = debug
     #self.Locked = False
     self.host = host
     self.db = database
+    self.lasterror = False
     self.lock = threading.Lock()
     self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
   def query(self,q,Lock=True):
     i = 0
     self.lock.acquire()
-    self.database.query(q)
+    try:
+      if self.debug: debug("MYSQL Query: %s" % q)
+      self.database.query(q)
+      self.lasterror = False
+    except:
+      error("Critical mysql query error Query was \"%s\": " % q + traceback.format_exc())
+      self.lasterror = True
     if not Lock:
     	self.lock.release()
     #except:
@@ -160,7 +168,10 @@ class sd: #Makes mysql module threadsafe
     #  self.database.query(q)
   def store_result(self):
     try:
-      res = self.database.store_result()
+      if not self.lasterror:
+	res = self.database.store_result()
+      else:
+	return None
       self.lock.release()
       return res
     except:
@@ -184,7 +195,8 @@ class Main:
     self.clientsusernames = dict()
     self.clientsaccid = dict()
     self.allclients = dict()
-    self.battles = dict() 
+    self.battles = dict()
+    self.starttime = time.time()
     self.ms = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     self.msGZ = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     self.debug = "d" in flags
@@ -270,6 +282,37 @@ class Main:
       error("getaccountid(%s) : MYSQL is not enabled" % username)
       return None
     return accid
+  def loadaccountfromdatabase(self,username):
+    if self.sql:
+      notice("Loading <%s> account..." % username )
+      self.database.query("SELECT id,name,password,playtime,accesslevel,bot,banned,casename,lastlogin,registrationdate,lastip FROM users WHERE name = '%s'" % username.replace("'","\\'"))
+      res = self.database.store_result()
+      if res.num_rows() >= 1:
+	r2 = res.fetch_row()[0]
+	cl = Handler.Client("0.0.0.0",None,None)
+	cl.accountid = int(r2[0])
+	cl.name = r2[1]
+	cl.password = r2[2]
+	cl.ptime = int(r2[3])
+	
+	accesslevel = int(r2[4])
+	if accesslevel >= 3:
+	  cl.admin = 1
+	if accesslevel > 1:
+	  cl.mod = 1
+	cl.bot = int(r2[5])
+	cl.banned = int(r2[6])
+	cl.username = r2[7]
+	cl.lastlogin = int(r2[8])
+	cl.registrationdate = int(r2[9])
+	cl.ip = (r2[10],0)
+	good("Account <%s> loaded succesful" % username)
+	return cl
+      else:
+	bad("Account <%s> doesn't exist" % username)
+	return None
+    else:
+      return None
   def getaccountbyid(self,id):
     if self.sql:
       self.database.query("SELECT id,casename FROM users WHERE id = '%s'" % str(id).replace("'","\\'"))
@@ -322,11 +365,11 @@ class Main:
       self.au = bool(int(self.conf["allowunregisteredusers"]))
       self.sql = True
       notice("MYSQL Enabled!, Connecting to database...")
-      self.database = sd("localhost",self.conf["mysqlusername"],self.conf["mysqlpassword"],self.conf["mysqldatabase"])
+      self.database = sd("localhost",self.conf["mysqlusername"],self.conf["mysqlpassword"],self.conf["mysqldatabase"],self.debug)
       thread.start_new_thread(self.connectionpingthread,())
       good("Done")
       notice("Loading channels...")
-      self.database.query("SELECT name,founder,operators,mutes,topic,id FROM channels")
+      self.database.query("SELECT name,founder,operators,mutes,topic,password,id FROM channels")
       res = self.database.store_result()
       for i in range(res.num_rows()):
 	
@@ -355,7 +398,7 @@ class Main:
 	    if v.count(":") > 0:
 	      z = v.split(":")
 	      mutes.update([(int(z[0]),float(z[1]))])
-	self.channels.update([(name,Channel(r[1],name,mutes,topic,operators,int(r[5])))])
+	self.channels.update([(name,Channel(r[1],name,mutes,topic,operators,int(r[6]),r[5]))])
 	self.channels[r[0]].confirmed = True
 	good("Added channel %s from database" % r[0])
 

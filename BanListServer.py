@@ -16,7 +16,10 @@ def cth(s):
     while 1:
       data = ""
       while not data.endswith("\n"):
-	data += s.recv(1024)
+	x = s.recv(1024)
+	if len(x) == 0:
+	  raise socket.error
+	data += x
       commands = data.split("\n")
       for cmd in commands:
 	args = cmd.strip(" \t\r\n").split(" ")
