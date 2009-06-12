@@ -378,6 +378,8 @@ class Handler:
 		    self.remove(co,"Read Error 104: Connection reset by peer")
 		    break
 		  cl.inbuf += d
+		  if len(cl.inbuf) > int(self.main.conf["maxrecvbuffersize"]):
+		    break
 	    except socket.error:
 		  se = sys.exc_value[0]
 		  if not sys.exc_value[1] == "Resource temporarily unavailable":
