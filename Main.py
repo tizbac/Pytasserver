@@ -195,6 +195,7 @@ class Main:
     self.clientsusernames = dict()
     self.clientsaccid = dict()
     self.allclients = dict()
+    self.dynamicsettings = ["springversion","serverversion","natport"]
     self.battles = dict()
     self.starttime = time.time()
     self.ms = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -292,6 +293,9 @@ class Main:
       error("getaccountid(%s) : MYSQL is not enabled" % username)
       return None
     return accid
+  def writesettings(self):
+    writeconfigfile("Server.conf",self.conf)
+    good("Wrote current config to file")
   def loadaccountfromdatabase(self,username):
     if self.sql:
       notice("Loading <%s> account..." % username )
