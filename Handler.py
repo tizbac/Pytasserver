@@ -285,10 +285,7 @@ class Handler:
 	    except:
 	      pass
 	  self.main.broadcast("REMOVEUSER %s\n" % self.clients[c].username)
-	try:
-	  c.close()
-	except:
-	  pass
+	
 	notice("Disconnected %s from handler %i , reason: %s" % (str(self.clients[c].ip),self.id,reason))
 	if self.clients[c].lgstatus > 0:
 	  #print self.main.clientsusernames
@@ -302,7 +299,11 @@ class Handler:
 	try:
 	  self.pollobj.unregister(c.fileno())
 	except:
-	  pass # it got destroyed by itself
+	  pass
+	try:
+	  c.close()
+	except:
+	  pass
 	if self.clients[c].lgstatus > 0 and self.clients[c].sql:
 	  try:
 	    self.clients[c].sync(self.main.database)
@@ -322,12 +323,14 @@ class Handler:
     
     try:
       while 1:
-	#debug("Handler %i: %f" % (self.id,time.time()))
-	#time.sleep(0.02)
+	debug("Handler %i: %f %s" % (self.id,time.time(),str(self.needflush)))
+	time.sleep(0.02)
 	#iR,oR,eR = select.select(self.clients.keys(),self.clients.keys(),[],0.5)
 	iR = []
 	oR = list(self.clients.keys())
-	pl = self.pollobj.poll(0.1)
+	
+	pl = self.pollobj.poll(1 if self.needflush else 200)
+	#print pl
 	for fd in pl:
 	  pollin = bool((fd[1] >> 0) & 1)
 	  pollpri = bool((fd[1] >> 1) & 1)
@@ -335,6 +338,7 @@ class Handler:
 	  pollerr = bool((fd[1] >> 3) & 1)
 	  pollhup = bool((fd[1] >> 4) & 1)
 	  pollnval = bool((fd[1] >> 5) & 1)
+	 # print pollin,pollpri,pollout,pollerr,pollhup,pollnval
 	  if pollin or pollpri:
 	    #print " %s ready to receive data" % str(fd)
 	    for s in list(self.clients.keys()):
@@ -342,8 +346,10 @@ class Handler:
 		newsocket = s
 	    iR.append(newsocket)
 	  if pollerr or pollhup or pollnval:
-	    #print "Removing %s , socket error" % str(fd)
+	    print "Removing %s , socket error" % str(fd)
+	    
 	    for s in list(self.clients.keys()):
+		print "%i == %i = %s" % (fd[0],s.fileno(),str(fd[0] == s.fileno()))
 		if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
 		  if pollhup:
 		    self.remove(s,"Poll Error: Connection reset by peer")
@@ -351,9 +357,12 @@ class Handler:
 		    self.remove(s,"Poll Error: Bad file descriptor")
 		  elif pollerr:
 		    self.remove(s,"Poll Error: Socket Exception")
+	    self.pollobj.unregister(fd[0])
 	#print iR
-	if len(iR) == 0 and not self.needflush:
-	  time.sleep(0.5)
+	#if not self.needflush:
+	#  print "Sleep: ",self.needflush
+	#  time.sleep(0.5)
+	
 	chsafe = dict(self.main.channels)
 	for ch in chsafe:
 	  for muted in list(chsafe[ch].mutes):

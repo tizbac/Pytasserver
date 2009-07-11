@@ -463,7 +463,7 @@ class Main:
 		l = k
 	    ist = Handler.Client(ip,cs,lh)
 	    lh.clients.update([(cs,ist)])
-	    lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
+	    lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL )
 	    self.allclients.update([(cs,ist)])
 	    #print "Handler %i: %s" % (lh.id,str(lh.clients))
 	    good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
