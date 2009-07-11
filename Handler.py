@@ -162,7 +162,10 @@ class Client:
     self.lastbsreset = time.time()
     self.battlestatus = "0"
     self.mod = 0
-    self.country = ip2country.lookup(self.ip[0])
+    if ip[0] == "127.0.0.1" or ip[0].startswith("192.168.1"):
+      self.country = "IT"
+    else:
+      self.country = ip2country.lookup(self.ip[0])
     self.bot = 0
     self.admin = 0
     self.ist = ist
@@ -391,12 +394,20 @@ class Handler:
 		  self.remove(co,str(se))
 
 	    cl.bs += len(cl.inbuf)
-	    if time.time() - cl.lastbsreset > float(self.main.conf["floodlimitseconds"]) :
-	      cl.bs = 0
-	      cl.lastbsreset = time.time()
-	    #print "cl.bs > "+str(int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))+" = "+str(cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))
-	    if cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]):
-	      self.remove(co,"Flood limit exceeded , Max flood is %i bytes/%fseconds, current flood was %i" % (int(self.main.conf["floodlimitbw"]),float(self.main.conf["floodlimitseconds"]),int(float(cl.bs)/float(self.main.conf["floodlimitseconds"]))))
+	    if cl.bot != 1:
+	      if time.time() - cl.lastbsreset > float(self.main.conf["floodlimitseconds"]) :
+		cl.bs = 0
+		cl.lastbsreset = time.time()
+	      #print "cl.bs > "+str(int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))+" = "+str(cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))
+	      if cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]):
+		self.remove(co,"Flood limit exceeded , Max flood is %i bytes/%fseconds, current flood was %i" % (int(self.main.conf["floodlimitbw"]),float(self.main.conf["floodlimitseconds"]),int(float(cl.bs)/float(self.main.conf["floodlimitseconds"]))))
+	    else:
+	      if time.time() - cl.lastbsreset > float(self.main.conf["botfloodlimitseconds"]) :
+		cl.bs = 0
+		cl.lastbsreset = time.time()
+	      #print "cl.bs > "+str(int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))+" = "+str(cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))
+	      if cl.bs > int(self.main.conf["botfloodlimitbw"])*float(self.main.conf["botfloodlimitseconds"]):
+		self.remove(co,"BOT Flood limit exceeded , Max flood is %i bytes/%fseconds, current flood was %i" % (int(self.main.conf["botfloodlimitbw"]),float(self.main.conf["botfloodlimitseconds"]),int(float(cl.bs)/float(self.main.conf["botfloodlimitseconds"]))))
 
 		
 	    if cl.inbuf.endswith("\n"):
@@ -418,7 +429,7 @@ class Handler:
 		    tb = traceback.format_exc()
 		    print tb
 		    print '-'*60
-		    self.main.broadcastadmins("SERVERMSG Broadcast to all admins - Command issued was '%s' by '%s'\n" % (args[0].upper(),cl.username))
+		    self.main.broadcastadmins("SERVERMSG Broadcast to all admins - Command issued was '%s' by '%s', args: %s\n" % (args[0].upper(),cl.username,str(args[1:]) if len(args) > 1 else "no args"))
 		    self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))
 		    for l in tb.split("\n"):
 		      self.main.broadcastadmins("SERVERMSG %s\n" % l)
