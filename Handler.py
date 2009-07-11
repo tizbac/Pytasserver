@@ -74,6 +74,7 @@ class ssock:
     self.sck = sock
   def send(self,data):
     self.buf.append(data)
+    self.ist.needflush = True
   def close(self):
     self.sck.close()
   def Flush(self,Final=False):
@@ -227,6 +228,7 @@ class Handler:
   accesstable = dict()
   def __init__(self,main,id):
     self.id = id
+    self.needflush = False
     self.clients = dict()
     self.pollobj = select.poll()
     self.main = main
@@ -350,7 +352,7 @@ class Handler:
 		  elif pollerr:
 		    self.remove(s,"Poll Error: Socket Exception")
 	#print iR
-	if len(iR) == 0:
+	if len(iR) == 0 and not self.needflush:
 	  time.sleep(0.5)
 	chsafe = dict(self.main.channels)
 	for ch in chsafe:
@@ -455,7 +457,7 @@ class Handler:
 		  #if not sys.exc_value[1] == "Resource temporarily unavailable":
 		  # self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
 		
-		    
+	self.needflush = False	    
     except:
       print "---------------------FATAL ERROR-----------------------"
       print '-'*60
