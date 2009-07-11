@@ -78,6 +78,8 @@ class ssock:
   def close(self):
     self.sck.close()
   def Flush(self,Final=False):
+    i = 0
+    bufsafe = list(self.buf)
     if Final:
       try:
 	for x in list(self.buf):
@@ -90,12 +92,20 @@ class ssock:
 	pass
     else:
       try:
-	for x in list(self.buf):
+	for x in bufsafe:
 	  z = str(x)
-	  self.sck.send(z)
+	  bytessent = self.sck.send(z)
+	  if bytessent == len(z):
+	    self.buf.remove(x)
+	  else:
+	    self.buf.remove(x)
+	    self.buf.insert(0,z[bytessent:])
+	    break
+	  i += 1
+	    #print "bytessent != len(z)"
 	  #if self.ist.main.debug:#and z.strip("\n") != "PING":
 	    #debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
-	  self.buf.remove(x)
+	  
       except socket.error:
 	se = sys.exc_value[0]
 	if not sys.exc_value[1] == "Resource temporarily unavailable":
@@ -329,7 +339,7 @@ class Handler:
 	iR = []
 	oR = list(self.clients.keys())
 	
-	pl = self.pollobj.poll(1 if self.needflush else 200)
+	pl = self.pollobj.poll(1 if self.needflush else 700)
 	#print pl
 	for fd in pl:
 	  pollin = bool((fd[1] >> 0) & 1)
