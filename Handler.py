@@ -357,7 +357,10 @@ class Handler:
 		    self.remove(s,"Poll Error: Bad file descriptor")
 		  elif pollerr:
 		    self.remove(s,"Poll Error: Socket Exception")
-	    self.pollobj.unregister(fd[0])
+	    try:
+	      self.pollobj.unregister(fd[0])
+	    except:
+	      pass
 	#print iR
 	#if not self.needflush:
 	#  print "Sleep: ",self.needflush
