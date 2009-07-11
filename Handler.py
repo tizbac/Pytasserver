@@ -324,7 +324,7 @@ class Handler:
     try:
       while 1:
 	#debug("Handler %i: %f %s" % (self.id,time.time(),str(self.needflush)))
-	time.sleep(0.02)
+	#time.sleep(0.02)
 	#iR,oR,eR = select.select(self.clients.keys(),self.clients.keys(),[],0.5)
 	iR = []
 	oR = list(self.clients.keys())
