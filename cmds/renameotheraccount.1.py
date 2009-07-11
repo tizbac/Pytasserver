@@ -18,7 +18,7 @@ if cl.admin == 1:
       if not fromsql:
 	c.send("SERVERMSG Disconnecting client\n")
 	acc.sso.send("SERVERMSG Your account has been renamed by %s to %s, you will now get disconnected\n" % (cl.username,acc.username))
-	self.remove(acc.sso.sck,"Renamed by <%s> to '%s'" % (cl.username,acc.username))
+	self.remove(acc.sso,"Renamed by <%s> to '%s'" % (cl.username,acc.username))
 	c.send("SERVERMSG Done\n")
 	
 	
