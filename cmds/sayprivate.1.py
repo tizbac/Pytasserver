@@ -12,3 +12,5 @@ if len(args) >= 3 and args[1] in self.main.clientsusernames :
 	if self.main.clientsusernames[args[1].lower()].sck in h.clients:
   		self.main.clientsusernames[args[1].lower()].send("SAIDPRIVATE %s %s\n" % (cl.username,' '.join(args[2:])))
   c.send("SAYPRIVATE %s %s\n" % (args[1],' '.join(args[2:])))
+else:
+  c.send("SERVERMSG SAYPRIVATE:Error no such user '%s'\n" % (args[1] if len(args) > 1 else "Missing argument"))
