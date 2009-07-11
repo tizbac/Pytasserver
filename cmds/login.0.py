@@ -171,4 +171,7 @@ try:
 except:
 	error("LOGIN")
 	error(traceback.format_exc())
-cl.loginlock.release()
+try:
+  cl.loginlock.release()
+except:
+  pass
