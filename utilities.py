@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def getrank(status):
 	bit0 = (status >> 2) & 1
 	bit1 = (status >> 3) & 1
@@ -79,3 +80,13 @@ def dec2bin(i, bits=None):
 	if bits:
 		b = b.rjust(bits,'0')
 	return reverse(b)
+def dec2bin_2(i, bits=None):
+	i = int(i)
+	b = ''
+	while i > 0:
+		j = i & 1
+		b = str(j) + b
+		i >>= 1
+	if bits:
+		b = b.rjust(bits,'0')
+	return b

@@ -308,7 +308,6 @@ class Main:
 	cl.name = r2[1]
 	cl.password = r2[2]
 	cl.ptime = int(r2[3])
-	
 	accesslevel = int(r2[4])
 	if accesslevel >= 3:
 	  cl.admin = 1
@@ -429,10 +428,10 @@ class Main:
     self.ms.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR,self.ms.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1 )
     self.msGZ.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR,self.ms.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1 )
     self.ms.bind((self.conf["listenaddr"],int(self.conf["listenport"])))
-    self.ms.listen(5)
+    self.ms.listen(int(self.conf["listenqlen"]) if "listenqlen" in self.conf else 5)
     good("Listening for connections on port %i" % (int(self.conf["listenport"])))
     self.msGZ.bind((self.conf["listenaddr"],int(self.conf["listenportgzip"])))
-    self.msGZ.listen(5)
+    self.msGZ.listen(int(self.conf["listenqlen"]) if "listenqlen" in self.conf else 5)
     
     thread.start_new_thread(listengzip,(self,))
     try:

@@ -150,10 +150,28 @@ class BattleStatus:
     #print bstr+" = "+str(bin2dec(bstr))
     return str(bin2dec(bstr))
 class Client:
-  
-  
+  def checkaccess(self,flags):
+    r = True
+    x = "OK"
+    i = 0
+    s = dec2bin(flags,6)
+    s2 = dec2bin(self.getaccessflags())
+    for b in s:
+      if bool(int(b)):
+	r = r and ( bool(int(s2[i])))
+	if r == False:
+	  x = "You haven't '%s' flag" % self.privtable[i]
+	  break
+      i += 1
+    return [r,x]
+  def getaccessflags(self):# b0 Logged in , b1 Bot , b2 Moderator , b3 Administator, b4 In battle, b5 Not in battle, b6 Battle founder
+    al = 0
+    al  = self.lgstatus*pow(2,0) + self.bot*pow(2,1) + self.mod*pow(2,2) + self.admin*pow(2,3)+ int(self.battle != -1)*pow(2,4)+ int(self.battle == -1)*pow(2,5)+int(self.battle != -1 and self.battle in self.ist.main.battles and self.ist.main.battles[self.battle].founder == self.username)*pow(2,6)
+    return al
   def __init__(self,ip,sock,ist):
     #self.lastping = time.time()
+    self.privtable = { 0 : "Logged in" , 1 : "Bot" , 2 : "Moderator", 3 : "Server administrator" , 4 : "In battle" , 5 : "Not in battle", 6 : "Battlefounder"}
+    #		     { 1 : "Logged in" , 2 : "Bot" , 4 : "Moderator", 8 : "Server administrator" , 16 : "In battle" , 32 : "Not in battle" , 64 : "Battlefounder"}
     self.accountid = 0
     self.supportedfeatures = [] 
     # FEATURES: CLIENTCHANNELSTATUS, ZIPSTREAM, 250PLAYERS
@@ -236,8 +254,10 @@ class Handler:
   id = 0
   #pendingclients = []
   accesstable = dict()
+   
   def __init__(self,main,id):
     self.id = id
+    
     self.needflush = False
     self.clients = dict()
     self.pollobj = select.poll()
@@ -442,22 +462,28 @@ class Handler:
 		  debug("%s Received:%s" % (cl.username,cm+red+"\n"+blue))
 		args = cm.strip("\r ").split(" ")
 		#print "Handler %i: " % (self.id) + str(args)
-		if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable and cl.lgstatus >= self.accesstable[args[0].lower()]:
-		  try:
-		    if self.main.climit:
-		      self.main.cmdlimit.oncommand(cl.username,self,co,args[0].upper())
-		    exec self.commands[args[0].lower()].strip(" \t\n\r")
-		  except:
-		    error(args[0])
-		    print '-'*60
-		    tb = traceback.format_exc()
-		    print tb
-		    print '-'*60
-		    self.main.broadcastadmins("SERVERMSG Broadcast to all admins - Command issued was '%s' by '%s', args: %s\n" % (args[0].upper(),cl.username,str(args[1:]) if len(args) > 1 else "no args"))
-		    self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))
-		    for l in tb.split("\n"):
-		      self.main.broadcastadmins("SERVERMSG %s\n" % l)
-		    self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))  
+		if len(args) > 0 and args[0].lower() in self.commands and args[0].lower() in self.accesstable:
+		  access = cl.checkaccess(self.accesstable[args[0].lower()])
+		  if access[0]:
+		    try:
+		      if self.main.climit:
+			self.main.cmdlimit.oncommand(cl.username,self,co,args[0].upper())
+		      exec self.commands[args[0].lower()].strip(" \t\n\r")
+		    except:
+		      error(args[0])
+		      print '-'*60
+		      tb = traceback.format_exc()
+		      print tb
+		      print '-'*60
+		      self.main.broadcastadmins("SERVERMSG Broadcast to all admins - Command issued was '%s' by '%s', args: %s\n" % (args[0].upper(),cl.username,str(args[1:]) if len(args) > 1 else "no args"))
+		      self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))
+		      for l in tb.split("\n"):
+			self.main.broadcastadmins("SERVERMSG %s\n" % l)
+		      self.main.broadcastadmins("SERVERMSG %s\n" % ("-"*60))
+		  else:
+		    c.send("SERVERMSG Not enough privileges to use '%s' : %s\n"%( args[0].upper(),access[1]))
+		    
+		    
 	for co in dict(self.clients):
 	  if co in self.clients:
 	    cl = self.clients[co]
