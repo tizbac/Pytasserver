@@ -155,7 +155,7 @@ class Client:
     x = "OK"
     i = 0
     s = dec2bin(flags,6)
-    s2 = dec2bin(self.getaccessflags())
+    s2 = dec2bin(self.getaccessflags(),6)
     for b in s:
       if bool(int(b)):
 	r = r and ( bool(int(s2[i])))
