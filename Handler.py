@@ -186,6 +186,7 @@ class Client:
     self.username = ""
     self.afk = 0
     self.rank = 0
+    self.oldname = ""
     self.bs = 0
     self.lastlogin = 0.0
     self.lastbsreset = time.time()
@@ -293,9 +294,9 @@ class Handler:
 	if self.clients[c].lgstatus > 0:  
 	  try:
 	    for ch in list(self.main.channels):
-	      if self.clients[c].username in self.main.channels[ch].users:
-		self.main.broadcastchannel(ch,"LEFT %s %s %s\n" % (ch,self.clients[c].username,reason))
-		self.main.channels[ch].users.remove(self.clients[c].username)
+	      if self.clients[c].oldname in self.main.channels[ch].users:
+		self.main.broadcastchannel(ch,"LEFT %s %s %s\n" % (ch,self.clients[c].oldname,reason))
+		self.main.channels[ch].users.remove(self.clients[c].oldname)
 		if len(self.main.channels[ch].users) == 0 and not self.main.channels[ch].confirmed:
 		  del self.main.channels[ch]
 	  except:
@@ -304,23 +305,23 @@ class Handler:
 	    print '-'*60
 	  for b in dict(self.main.battles):
 	    try:
-	      if b in self.main.battles and self.clients[c].username in self.main.battles[b].players:
-		if b in self.main.battles and self.main.battles[b].founder == self.clients[c].username:
+	      if b in self.main.battles and self.clients[c].oldname in self.main.battles[b].players:
+		if b in self.main.battles and self.main.battles[b].founder == self.clients[c].oldname:
 		  self.main.broadcast("BATTLECLOSED %i\n" % b)
 		  if b in self.main.battles:
 		    del self.main.battles[b]
 		else:
-		  self.main.battles[b].players.remove(self.clients[c].username)
-		  self.main.broadcast("LEFTBATTLE %i %s\n" % (b,self.clients[c].username))
+		  self.main.battles[b].players.remove(self.clients[c].oldname)
+		  self.main.broadcast("LEFTBATTLE %i %s\n" % (b,self.clients[c].oldname))
 	    except:
 	      pass
-	  self.main.broadcast("REMOVEUSER %s\n" % self.clients[c].username)
+	  self.main.broadcast("REMOVEUSER %s\n" % self.clients[c].oldname)
 	
 	notice("Disconnected %s from handler %i , reason: %s" % (str(self.clients[c].ip),self.id,reason))
 	if self.clients[c].lgstatus > 0:
 	  #print self.main.clientsusernames
-	  if self.clients[c].username.lower() in self.main.clientsusernames:
-	    del self.main.clientsusernames[self.clients[c].username.lower()]
+	  if self.clients[c].oldname.lower() in self.main.clientsusernames:
+	    del self.main.clientsusernames[self.clients[c].oldname.lower()]
 	  #print self.main.clientsusernames
 	  if self.clients[c].accountid in self.main.clientsaccid:
 	    del self.main.clientsaccid[self.clients[c].accountid]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-if cl.admin == 1:
-  if len(args) == 3:
+
+if len(args) == 3:
     fromsql = False
     if not args[1].lower() in self.main.clientsusernames:
       acc = self.main.loadaccountfromdatabase(args[1].lower())

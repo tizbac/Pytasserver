@@ -28,6 +28,7 @@ try:
 	    if res.num_rows() >= 1:
 	      r2 = res.fetch_row()[0]
 	      cl.username = r2[6]
+	      cl.oldname = cl.username
 	      cl.accountid =int(r2[7])
 	      cl.password = r2[1]
 	      cl.sql = True
@@ -77,6 +78,7 @@ try:
 		val = self.main.validateusername(args[1])
 		if ( val[0] ):
 		  cl.username = args[1]
+		  cl.oldname = cl.username
 		  cl.password = args[2]
 		  cl.accountid = -int(time.time()*10000.0) #Hope that will not fail ;)
 		  cl.sql = False
@@ -122,6 +124,7 @@ try:
 	    val = self.main.validateusername(args[1])
 	    if ( val[0] ):
 	      cl.username = args[1]
+	      cl.oldname = cl.username
 	      cl.password = args[2]
 	      try:
 		cl.cpu = int(args[3])
