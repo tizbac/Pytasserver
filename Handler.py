@@ -308,7 +308,11 @@ class Handler:
 	      if b in self.main.battles and self.clients[c].oldname in self.main.battles[b].players:
 		if b in self.main.battles and self.main.battles[b].founder == self.clients[c].oldname:
 		  self.main.broadcast("BATTLECLOSED %i\n" % b)
+		  
 		  if b in self.main.battles:
+		    for p in self.main.battles[b].players:
+		    	if p in self.main.clientsusernames:
+		    		self.main.allclients[self.main.clientsusernames[p]].battle = -1
 		    del self.main.battles[b]
 		else:
 		  self.main.battles[b].players.remove(self.clients[c].oldname)
