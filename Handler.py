@@ -311,8 +311,8 @@ class Handler:
 		  
 		  if b in self.main.battles:
 		    for p in self.main.battles[b].players:
-		    	if p in self.main.clientsusernames:
-		    		self.main.allclients[self.main.clientsusernames[p]].battle = -1
+		    	if p.lower() in self.main.clientsusernames:
+		    		self.main.allclients[self.main.clientsusernames[p.lower()]].battle = -1
 		    del self.main.battles[b]
 		else:
 		  self.main.battles[b].players.remove(self.clients[c].oldname)
