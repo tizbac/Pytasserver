@@ -8,14 +8,14 @@
 ##REGISTER Johnny Gnmk1g3mcY6OWzJuM4rlMw==
 
 if len(args) == 3 and cl.lgstatus == 0 and self.main.sql:
-  self.main.database.query("SELECT id,name FROM users WHERE name = '%s' LIMIT 1" % ( args[1].replace("'","").lower()))
+  self.main.database.query("SELECT id,name FROM users WHERE name = '%s' LIMIT 1" % ( self.main.database.escape(args[1].lower())))
   res = self.main.database.store_result()
   if args[1].lower() not in self.main.clientsusernames:
     val = self.main.validateusername(args[1])
     if val[0]:
       if res.num_rows() == 0:
 	self.main.database.query("INSERT INTO users (name,password,playtime,accesslevel,bot,banned,casename,registrationdate) VALUES ('%s','%s',0,1,0,0,'%s',%i)" %
-	(args[1].replace("'","").lower(),args[2].replace("'",""),args[1].replace("'",""),int(time.time())),False)
+	(self.main.database.escape(args[1]).lower(),self.main.database.escape(args[2]),self.main.database.escape(args[1]),int(time.time())),False)
 	c.send("REGISTRATIONACCEPTED\n")
 	self.remove(co,"Registration complete")
       else:

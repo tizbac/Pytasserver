@@ -23,7 +23,7 @@ if not cl.loggingin:
 try:
 	if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clientsusernames:
 	  if self.main.sql:
-	    self.main.database.query("SELECT name,password,playtime,accesslevel,bot,banned,casename,id FROM users WHERE name = '%s' AND password = '%s' LIMIT 1" % (args[1].replace("'","\\'").lower(),args[2].replace("'","\\'")))
+	    self.main.database.query("SELECT name,password,playtime,accesslevel,bot,banned,casename,id FROM users WHERE name = '%s' AND password = '%s' LIMIT 1" % (self.main.database.escape(args[1]).lower(),self.main.database.escape(args[2])))
 	    res = self.main.database.store_result()
 	    if res.num_rows() >= 1:
 	      r2 = res.fetch_row()[0]
@@ -72,7 +72,7 @@ try:
 	      c.send("DENIED %s\n" % ("Bad username/password"))
 	      self.remove(co,"Bad login attempt, Unregistered login disabled")
 	    else:
-	      self.main.database.query("SELECT name FROM users WHERE name = '%s'" % (args[1].replace("'","\\'")))
+	      self.main.database.query("SELECT name FROM users WHERE name = '%s'" % (self.main.database.escape(args[1])))
 	      res = self.main.database.store_result()
 	      if res.num_rows() == 0:
 		val = self.main.validateusername(args[1])

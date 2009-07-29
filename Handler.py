@@ -244,7 +244,7 @@ class Client:
       al = 2
     if self.admin == 1:
       al = 3
-    db.query("UPDATE users SET name = '%s', password = '%s', playtime = %i, accesslevel = %i, bot = %i, banned = %i, casename = '%s', lastlogin = %i, lastip = '%s' WHERE id = %i" % (self.username.lower().replace("'","\\'"),self.password,self.ptime,al,self.bot,0,self.username.replace("'","\\'"),int(self.lastlogin),self.ip[0],self.accountid),False)
+    db.query("UPDATE users SET name = '%s', password = '%s', playtime = %i, accesslevel = %i, bot = %i, banned = %i, casename = '%s', lastlogin = %i, lastip = '%s' WHERE id = %i" % (self.main.database.escape(self.username).lower(),self.password,self.ptime,al,self.bot,0,self.main.database.escape(self.username),int(self.lastlogin),self.ip[0],self.accountid),False)
     
     
 class Handler:

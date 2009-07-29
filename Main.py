@@ -126,8 +126,8 @@ class Channel:
 	error("Founder of channel %s does not exist in database !!!!!!!!!!" % self.name)
 	return"""
       db.query("INSERT INTO channels (name,founder,mutes,operators,topic,password) VALUES ('%s','%s','%s','%s','%s','%s')" %
-      (self.name.replace("'",""),str(self.founder),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.key.replace("'","\\'")),False)
-      db.query("SELECT id,name FROM channels WHERE name = '%s' LIMIT 1" % self.name.replace("'","\\'"))
+      (mysql.escape_string(self.name),mysql.escape_string(str(self.founder)),mysql.escape_string(mutesstr),mysql.escape_string(ops),mysql.escape_string(self.topic),mysql.escape_string(self.key),False))
+      db.query("SELECT id,name FROM channels WHERE name = '%s' LIMIT 1" % db.escape(self.name))
       res = db.store_result()
       if res.num_rows() > 0:
 	self.dbid = int(res.fetch_row()[0][0])
@@ -139,7 +139,7 @@ class Channel:
       mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
     ops = ' '.join(self.operators)
     db.query("UPDATE channels SET name = '%s',founder = '%s',mutes = '%s',operators = '%s', topic = '%s', password = '%s' WHERE id = %i" %
-    (self.name.replace("'",""),str(self.founder),mutesstr.replace("'",""),ops.replace("'",""),self.topic.replace("'","\\'").replace("\\n","\\\\n"),self.key.replace("'","\\'"),self.dbid),False)
+    (mysql.escape_string(self.name),str(self.founder),mysql.escape_string(mutesstr),mysql.escape_string(ops),mysql.escape_string(self.topic),mysql.escape_string(self.key),self.dbid),False)
 class sd: #Makes mysql module threadsafe
   def __init__(self,host,username,password,database,debug=False):
     self.uname = username
@@ -151,6 +151,8 @@ class sd: #Makes mysql module threadsafe
     self.lasterror = False
     self.lock = threading.Lock()
     self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
+  def escape(self,s):
+    return mysql.escape_string(s)
   def query(self,q,Lock=True):
     i = 0
     self.lock.acquire()
@@ -281,7 +283,7 @@ class Main:
     return None
   def getaccountid(self,username):
     if self.sql:
-      self.database.query("SELECT id,name FROM users WHERE name = '%s'" % username.replace("'","\\'"))
+      self.database.query("SELECT id,name FROM users WHERE name = '%s'" % username.replace("'","\\'").replace("\\","\\\\"))
       res = self.database.store_result()
       if res.num_rows() >= 1:
 	r2 = res.fetch_row()[0]
@@ -299,7 +301,7 @@ class Main:
   def loadaccountfromdatabase(self,username):
     if self.sql:
       notice("Loading <%s> account..." % username )
-      self.database.query("SELECT id,name,password,playtime,accesslevel,bot,banned,casename,lastlogin,registrationdate,lastip FROM users WHERE name = '%s'" % username.replace("'","\\'"))
+      self.database.query("SELECT id,name,password,playtime,accesslevel,bot,banned,casename,lastlogin,registrationdate,lastip FROM users WHERE name = '%s'" % self.database.escape(username))
       res = self.database.store_result()
       if res.num_rows() >= 1:
 	r2 = res.fetch_row()[0]
@@ -328,7 +330,7 @@ class Main:
       return None
   def getaccountbyid(self,id):
     if self.sql:
-      self.database.query("SELECT id,casename FROM users WHERE id = '%s'" % str(id).replace("'","\\'"))
+      self.database.query("SELECT id,casename FROM users WHERE id = '%s'" % self.database.escape(str(id)))
       res = self.database.store_result()
       if res.num_rows() >= 1:
 	r2 = res.fetch_row()[0]
