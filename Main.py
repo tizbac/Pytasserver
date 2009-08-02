@@ -15,6 +15,7 @@ import md5
 import commands
 from ParseConfig import *
 from colors import *
+from utilities import *
 import _mysql as mysql
 import Handler
 import zlib
@@ -35,6 +36,8 @@ from CommandLimit import *
     self.title = title
     self.modname = modname
     self.players = []'''
+
+
 class compressedsocket:
   def __init__(self,sock):
     self.sock = sock
@@ -95,7 +98,7 @@ class Channel:
   topicsetby = "Nobody"
   def __del__(self):
     debug("Channel %s unloaded from memory" % self.name)
-  def __init__(self,founder,name,mutes=dict(),topic="",operators=[],dbid=0,key="*"):
+  def __init__(self,founder,name,mutes=dict(),topic="",operators=[],dbid=0,key="*",ipmutes=dict(),accountbans=dict(),ipbans=dict()):
     self.name = name
     self.key = key
     self.dbid = dbid
@@ -105,18 +108,33 @@ class Channel:
     self.users = []
     self.confirmed = False
     self.mutes = mutes
+    self.ipmutes = dict()
     self.operators = operators
+    self.accountbans = accountbans
+    self.ipbans = ipbans
     if topic == "":
       self.topic = "*"
     else:
       self.topic = topic
+  def checkbanned(self,cl):
+    if int(cl.accountid) in self.accountbans:
+    	return (True,"Account banned on channel")
+    if cl.ip[0] in self.ipbans:
+    	return (True,"IP-Banned on channel")
+    return (False,"OK")
+  def checkmuted(self,cl):
+    if int(cl.accountid) in self.mutes:
+    	return (True,"Account muted on channel")
+    if cl.ip[0] in self.ipmutes:
+    	return (True,"IP-Muted on channel")
+    return (False,"OK")
   def confirm(self,db):
     db.query("SELECT name FROM channels WHERE name = '%s' LIMIT 1" % self.name.replace("'","\\'"))
     res = db.store_result()
     if res.num_rows() == 0:
-      mutesstr = ""
+      """mutesstr = ""
       for m in self.mutes:
-	mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
+	mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))"""
       ops = ' '.join(self.operators)
       """db.query("SELECT id,casename FROM users WHERE casename = '%s' LIMIT 1" % self.founder)
       res = db.store_result()
@@ -125,8 +143,8 @@ class Channel:
       else:
 	error("Founder of channel %s does not exist in database !!!!!!!!!!" % self.name)
 	return"""
-      db.query("INSERT INTO channels (name,founder,mutes,operators,topic,password) VALUES ('%s','%s','%s','%s','%s','%s')" %
-      (mysql.escape_string(self.name),mysql.escape_string(str(self.founder)),mysql.escape_string(mutesstr),mysql.escape_string(ops),mysql.escape_string(self.topic),mysql.escape_string(self.key),False))
+      db.query("INSERT INTO channels (name,founder,accountmutes,operators,topic,password,ipmutes,accountbans,ipbans) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s')" %
+      (mysql.escape_string(self.name),mysql.escape_string(str(self.founder)),mysql.escape_string(dict2str(self.mutes)),mysql.escape_string(ops),mysql.escape_string(self.topic),mysql.escape_string(self.key),mysql.escape_string(dict2str(self.ipmutes)),mysql.escape_string(dict2str(self.accountbans)),mysql.escape_string(dict2str(self.ipbans))),False)
       db.query("SELECT id,name FROM channels WHERE name = '%s' LIMIT 1" % db.escape(self.name))
       res = db.store_result()
       if res.num_rows() > 0:
@@ -138,8 +156,8 @@ class Channel:
     for m in self.mutes:
       mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
     ops = ' '.join(self.operators)
-    db.query("UPDATE channels SET name = '%s',founder = '%s',mutes = '%s',operators = '%s', topic = '%s', password = '%s' WHERE id = %i" %
-    (mysql.escape_string(self.name),str(self.founder),mysql.escape_string(mutesstr),mysql.escape_string(ops),mysql.escape_string(self.topic),mysql.escape_string(self.key),self.dbid),False)
+    db.query("UPDATE channels SET name = '%s',founder = '%s',accountmutes = '%s',operators = '%s', topic = '%s', password = '%s', accountmutes= '%s', ipmutes='%s', accountbans='%s', ipbans='%s' WHERE id = %i" %
+    (mysql.escape_string(self.name),str(self.founder),mysql.escape_string(mutesstr),mysql.escape_string(ops),mysql.escape_string(self.topic),mysql.escape_string(self.key),mysql.escape_string(dict2str(self.mutes)),mysql.escape_string(dict2str(self.ipmutes)),mysql.escape_string(dict2str(self.accountbans)),mysql.escape_string(dict2str(self.ipbans)),self.dbid),False)
 class sd: #Makes mysql module threadsafe
   def __init__(self,host,username,password,database,debug=False):
     self.uname = username
@@ -329,6 +347,7 @@ class Main:
     else:
       return None
   def getaccountbyid(self,id):
+    accname = None
     if self.sql:
       self.database.query("SELECT id,casename FROM users WHERE id = '%s'" % self.database.escape(str(id)))
       res = self.database.store_result()
@@ -384,7 +403,7 @@ class Main:
       thread.start_new_thread(self.connectionpingthread,())
       good("Done")
       notice("Loading channels...")
-      self.database.query("SELECT name,founder,operators,mutes,topic,password,id FROM channels")
+      self.database.query("SELECT name,founder,operators,accountmutes,topic,password,id,ipmutes,accountbans,ipbans FROM channels")
       res = self.database.store_result()
       for i in range(res.num_rows()):
 	
@@ -406,14 +425,9 @@ class Main:
 	  operators = r[2].split(" ")
 	else:
 	  operators = []
-	mutes = dict()
+	mutes = str2dict(r[3],int,float)
 	topic = r[4]
-	if r[3] and len(r[3]) > 0:
-	  for v in r[3].split(" "):
-	    if v.count(":") > 0:
-	      z = v.split(":")
-	      mutes.update([(int(z[0]),float(z[1]))])
-	self.channels.update([(name,Channel(r[1],name,mutes,topic,operators,int(r[6]),r[5]))])
+	self.channels.update([(name,Channel(r[1],name,mutes,topic,operators,int(r[6]),r[5],str2dict(r[7],str,float),str2dict(r[8],int,float),str2dict(r[9],str,float)))])
 	self.channels[r[0]].confirmed = True
 	good("Added channel %s from database" % r[0])
 
@@ -462,7 +476,7 @@ class Main:
 	      if k < l:
 		lh = hln[k]
 		l = k
-	    ist = Handler.Client(ip,cs,lh)
+	    ist = Handler.Client(ip,cs,lh,self)
 	    lh.clients.update([(cs,ist)])
 	    lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL )
 	    self.allclients.update([(cs,ist)])

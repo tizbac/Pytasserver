@@ -89,7 +89,7 @@ try:
 		  c.send("ACCEPTED %s\n" % cl.username)
 		  success = True
 		  good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
-		  motd = "Hi %s! Welcom to pytasserver\n %i Connected players in %i opened battles\nTo save your progress and/or register channels or get a bot flag you will need to register" % ( args[1],len(self.main.clientsusernames.keys()),len(self.main.battles))
+		  motd = "Hi %s! Welcome to pytasserver\n %i Connected players in %i opened battles\nTo save your progress and/or register channels or get a bot flag you will need to register" % ( args[1],len(self.main.clientsusernames.keys()),len(self.main.battles))
 		  for l in motd.split("\n"):
 		    c.send("MOTD %s\n" % l)
 		  self.main.clientsusernames.update([(cl.username.lower(),c)])
@@ -178,3 +178,10 @@ try:
   cl.loginlock.release()
 except:
   pass
+if cl.username.lower() in self.main.clientsusernames and self.main.clientsusernames[cl.username.lower()].sck not in self.clients:
+	#Client got killed before login,revert login
+	notice("Client killed while logging in, reverting")
+	del self.main.clientsusernames[cl.username.lower()]
+	if cl.accountid in self.main.clientsaccid:
+		del self.main.clientsaccid[cl.accountid]
+	

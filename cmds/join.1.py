@@ -10,6 +10,10 @@
 ##JOIN myprivatechannel mypassword
 if len(args) >= 2:
   if args[1] in self.main.channels:
+    chk = self.main.channels[args[1]].checkbanned(cl)
+    if chk[0]:
+      raise CommandError("You are %s on #%s" % (chk[1],args[1]))
+    
     if not cl.username in self.main.channels[args[1]].users:
       if self.main.channels[args[1]].key == "*" or (len(args) == 3 and self.main.channels[args[1]].key == args[2]):
 	self.main.channels[args[1]].users.append(cl.username)

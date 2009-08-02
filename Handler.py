@@ -5,6 +5,11 @@ import base64,md5,commands,ip2country
 import select,os
 from utilities import *
 from colors import *
+class CommandError(Exception):
+  def __init__(self,value):
+    self.value = value
+  def __str__(self):
+    return repr(self.value)
 class StartRect:
   def __init__(self,allyno,left,top,right,bottom):
     self.allyno = int(allyno)
@@ -168,7 +173,7 @@ class Client:
     al = 0
     al  = self.lgstatus*pow(2,0) + self.bot*pow(2,1) + self.mod*pow(2,2) + self.admin*pow(2,3)+ int(self.battle != -1)*pow(2,4)+ int(self.battle == -1)*pow(2,5)+int(self.battle != -1 and self.battle in self.ist.main.battles and self.ist.main.battles[self.battle].founder == self.username)*pow(2,6)
     return al
-  def __init__(self,ip,sock,ist):
+  def __init__(self,ip,sock,ist,mainist):
     #self.lastping = time.time()
     self.privtable = { 0 : "Logged in" , 1 : "Bot" , 2 : "Moderator", 3 : "Server administrator" , 4 : "In battle" , 5 : "Not in battle", 6 : "Battlefounder"}
     #		     { 1 : "Logged in" , 2 : "Bot" , 4 : "Moderator", 8 : "Server administrator" , 16 : "In battle" , 32 : "Not in battle" , 64 : "Battlefounder"}
@@ -178,6 +183,7 @@ class Client:
     #
     #
     #
+    self.main = mainist
     self.loginlock = threading.Lock()
     self.loggingin = False
     self.ip = ip
@@ -384,6 +390,7 @@ class Handler:
 	    print "Removing %s , socket error" % str(fd)
 	    
 	    for s in list(self.clients.keys()):
+	      try:
 		print "%i == %i = %s" % (fd[0],s.fileno(),str(fd[0] == s.fileno()))
 		if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
 		  if pollhup:
@@ -392,6 +399,8 @@ class Handler:
 		    self.remove(s,"Poll Error: Bad file descriptor")
 		  elif pollerr:
 		    self.remove(s,"Poll Error: Socket Exception")
+	      except:
+		pass
 	    try:
 	      self.pollobj.unregister(fd[0])
 	    except:
@@ -400,24 +409,69 @@ class Handler:
 	#if not self.needflush:
 	#  print "Sleep: ",self.needflush
 	#  time.sleep(0.5)
-	
-	chsafe = dict(self.main.channels)
-	for ch in chsafe:
-	  for muted in list(chsafe[ch].mutes):
-	    if chsafe[ch].mutes[muted] > 0.0 and chsafe[ch].mutes[muted] < time.time():
-	      try:
-		del self.main.channels[ch].mutes[muted]
-		if self.main.sql:
-		  muted_ = self.main.getaccountbyid(muted)
-		else:
-		  muted_ = muted
-		self.main.channels[ch].sync(self.main.database)
-		#print "CHANNELMESSAGE %s %s has been unmuted(mute expired) " % (ch,muted_)
-		self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(mute expired)\n" % ( ch,muted_))
-	      except:
-		print '-'*60
-		traceback.print_exc(file=sys.stdout)
-		print '-'*60
+	#debug("id = %i"%self.id)
+	if self.id == 1:#Only run that on one handler
+		debug("Check mutes & bans expire")
+		chsafe = dict(self.main.channels)
+		for ch in chsafe:
+		  for muted in list(chsafe[ch].mutes):
+		    if chsafe[ch].mutes[muted] > 0.0 and chsafe[ch].mutes[muted] < time.time():
+		      try:
+			del self.main.channels[ch].mutes[muted]
+			if self.main.sql:
+			  muted_ = self.main.getaccountbyid(muted)
+			else:
+			  muted_ = muted
+			if not muted_:
+			  muted_ = muted
+			self.main.channels[ch].sync(self.main.database)
+			#print "CHANNELMESSAGE %s %s has been unmuted(mute expired) " % (ch,muted_)
+			self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(Account mute expired)\n" % ( ch,muted_))
+		      except:
+			print '-'*60
+			traceback.print_exc(file=sys.stdout)
+			print '-'*60
+		  for muted in list(chsafe[ch].ipmutes):
+		    if chsafe[ch].ipmutes[muted] > 0.0 and chsafe[ch].ipmutes[muted] < time.time():
+		      try:
+			del self.main.channels[ch].ipmutes[muted]
+			mutedip = muted
+			self.main.channels[ch].sync(self.main.database)
+			#print "CHANNELMESSAGE %s %s has been unmuted(mute expired) " % (ch,muted_)
+			self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unmuted(IP-mute expired)\n" % ( ch,str(mutedip)))
+		      except:
+			print '-'*60
+			traceback.print_exc(file=sys.stdout)
+			print '-'*60
+		  for banned in list(chsafe[ch].accountbans):
+		    if chsafe[ch].accountbans[banned] > 0.0 and chsafe[ch].accountbans[banned] < time.time():
+		      try:
+			del chsafe[ch].accountbans[banned]
+			if self.main.sql:
+			  banned_ = self.main.getaccountbyid(banned)
+			else:
+			  banned_ = banned
+			if not muted_:
+			  banned_ = banned
+			self.main.channels[ch].sync(self.main.database)
+			#print "CHANNELMESSAGE %s %s has been unmuted(mute expired) " % (ch,muted_)
+			self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unbanned from channel(Account ban expired)\n" % ( ch,banned_))
+		      except:
+			print '-'*60
+			traceback.print_exc(file=sys.stdout)
+			print '-'*60
+		  for banned in list(chsafe[ch].ipbans):
+		    if chsafe[ch].ipbans[banned] > 0.0 and chsafe[ch].ipbans[banned] < time.time():
+		      try:
+			del chsafe[ch].ipbans[banned]
+			self.main.channels[ch].sync(self.main.database)
+			#print "CHANNELMESSAGE %s %s has been unmuted(mute expired) " % (ch,muted_)
+			self.main.broadcastchannel(ch,"CHANNELMESSAGE %s %s has been unbanned from channel(IP ban expired)\n" % ( ch,str(banned)))
+		      except:
+			print '-'*60
+			traceback.print_exc(file=sys.stdout)
+			print '-'*60
+		
 	for co in iR:
 	  if co in self.clients:
 	    cl = self.clients[co]
@@ -471,9 +525,12 @@ class Handler:
 		  access = cl.checkaccess(self.accesstable[args[0].lower()])
 		  if access[0]:
 		    try:
-		      if self.main.climit:
+		      if self.main.climit and cl.admin == 0:
 			self.main.cmdlimit.oncommand(cl.username,self,co,args[0].upper())
-		      exec self.commands[args[0].lower()].strip(" \t\n\r")
+		      try:
+			exec self.commands[args[0].lower()].strip(" \t\n\r")
+		      except CommandError as e:
+			c.send("SERVERMSG Command %s failed:%s\n"%(args[0],str(e.value)))
 		    except:
 		      error(args[0])
 		      print '-'*60

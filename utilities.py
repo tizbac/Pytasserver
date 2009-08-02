@@ -1,4 +1,19 @@
 # -*- coding: utf-8 -*-
+def dict2str(d):
+	l = []
+	s = ""
+	for k in d:
+		l.append("%s:%s"%(str(k),str(d[k])))
+	s = ' '.join(l)
+	return s
+def str2dict(s,kt=str,dt=str):
+	l = s.split(" ")
+	d = dict()
+	for x in l:
+		a = x.split(":")
+		if len(a)==2:
+			d.update([(kt(a[0]),dt(a[1]))])
+	return d	
 def getrank(status):
 	bit0 = (status >> 2) & 1
 	bit1 = (status >> 3) & 1

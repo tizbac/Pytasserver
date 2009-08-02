@@ -34,6 +34,7 @@ class CommandsLimitHandler:
 	    self.userlimits[l].remove(ul)
 	  else:
 	    if ul[1] > self.limits[ul[0]][0]:
+	      
 	      ul[3].remove(ul[4],"%s command abuse: frequency is too high, max is %i times in %f seconds" % (ul[0],self.limits[ul[0]][0],self.limits[ul[0]][1]))
       self.lock.release()
   def reloadlimits(self,configfile="CommandsLimit.cfg"):
