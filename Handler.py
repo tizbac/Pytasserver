@@ -546,8 +546,8 @@ class Handler:
 			self.main.cmdlimit.oncommand(cl.username,self,co,args[0].upper())
 		      try:
 			exec self.commands[args[0].lower()].strip(" \t\n\r")
-		      except CommandError as e:
-			c.send("SERVERMSG Command %s failed:%s\n"%(args[0],str(e.value)))
+		      except CommandError:
+			c.send("SERVERMSG Command %s failed:%s\n"%(args[0],str(sys.exc_value)))
 		    except:
 		      error(args[0])
 		      print '-'*60
