@@ -1,4 +1,20 @@
 # -*- coding: utf-8 -*-
+"""
+Copyright (C) 2009  Tiziano Bacocco
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see http://www.gnu.org/licenses/
+    """
+  
 import socket,string,thread,time,threading
 import sys,traceback,pdb,re,os
 import base64,md5,commands,ip2country
@@ -183,6 +199,7 @@ class Client:
     #
     #
     #
+    self.lanip = "*"
     self.main = mainist
     self.loginlock = threading.Lock()
     self.loggingin = False
@@ -361,7 +378,7 @@ class Handler:
   def ml(self):
     self.clients = dict()
     self.clientsusernames = dict()
-    
+    lastexpirecheck = time.time()#It limits ban & mute expire checks so they gets checked every sec also with a lot of load
     try:
       while 1:
 	#debug("Handler %i: %f %s" % (self.id,time.time(),str(self.needflush)))
@@ -410,12 +427,12 @@ class Handler:
 	#  print "Sleep: ",self.needflush
 	#  time.sleep(0.5)
 	#debug("id = %i"%self.id)
-	if self.id == 1:#Only run that on one handler
-		debug("Check mutes & bans expire")
+	if self.id == 1 and time.time() - lastexpirecheck > 1.0:#Only run that on one handler
+		#debug("Check mutes & bans expire")
 		chsafe = dict(self.main.channels)
 		for ch in chsafe:
 		  for muted in list(chsafe[ch].mutes):
-		    if chsafe[ch].mutes[muted] > 0.0 and chsafe[ch].mutes[muted] < time.time():
+		    if chsafe[ch].mutes[muted] >= 0.0 and chsafe[ch].mutes[muted] < time.time():
 		      try:
 			del self.main.channels[ch].mutes[muted]
 			if self.main.sql:
@@ -432,7 +449,7 @@ class Handler:
 			traceback.print_exc(file=sys.stdout)
 			print '-'*60
 		  for muted in list(chsafe[ch].ipmutes):
-		    if chsafe[ch].ipmutes[muted] > 0.0 and chsafe[ch].ipmutes[muted] < time.time():
+		    if chsafe[ch].ipmutes[muted] >= 0.0 and chsafe[ch].ipmutes[muted] < time.time():
 		      try:
 			del self.main.channels[ch].ipmutes[muted]
 			mutedip = muted
@@ -444,7 +461,7 @@ class Handler:
 			traceback.print_exc(file=sys.stdout)
 			print '-'*60
 		  for banned in list(chsafe[ch].accountbans):
-		    if chsafe[ch].accountbans[banned] > 0.0 and chsafe[ch].accountbans[banned] < time.time():
+		    if chsafe[ch].accountbans[banned] >= 0.0 and chsafe[ch].accountbans[banned] < time.time():
 		      try:
 			del chsafe[ch].accountbans[banned]
 			if self.main.sql:
@@ -461,7 +478,7 @@ class Handler:
 			traceback.print_exc(file=sys.stdout)
 			print '-'*60
 		  for banned in list(chsafe[ch].ipbans):
-		    if chsafe[ch].ipbans[banned] > 0.0 and chsafe[ch].ipbans[banned] < time.time():
+		    if chsafe[ch].ipbans[banned] >= 0.0 and chsafe[ch].ipbans[banned] < time.time():
 		      try:
 			del chsafe[ch].ipbans[banned]
 			self.main.channels[ch].sync(self.main.database)
@@ -471,7 +488,7 @@ class Handler:
 			print '-'*60
 			traceback.print_exc(file=sys.stdout)
 			print '-'*60
-		
+		lastexpirecheck = time.time()
 	for co in iR:
 	  if co in self.clients:
 	    cl = self.clients[co]

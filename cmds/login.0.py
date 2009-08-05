@@ -39,6 +39,14 @@ try:
 		cl.mod = 1
 	      if int(r2[3]) >= 3:
 		cl.admin = 1
+	      try:
+		cl.cpu = int(args[3])
+	      except:
+		cl.cpu = 0
+	      if self.main.ipregex.match(args[4]):
+		cl.lanip = args[4]
+	      else:
+		cl.lanip = "*"
 	      c.send("ACCEPTED %s\n" % cl.username)
 	      success = True
 	      good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
@@ -86,6 +94,10 @@ try:
 		    cl.cpu = int(args[3])
 		  except:
 		    cl.cpu = 0
+		  if self.main.ipregex.match(args[4]):
+		    cl.lanip = args[4]
+		  else:
+		    cl.lanip = "*"
 		  c.send("ACCEPTED %s\n" % cl.username)
 		  success = True
 		  good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
@@ -130,6 +142,10 @@ try:
 		cl.cpu = int(args[3])
 	      except:
 		cl.cpu = 0
+	      if self.main.ipregex.match(args[4]):
+		cl.lanip = args[4]
+	      else:
+		cl.lanip = "*"
 	      c.send("ACCEPTED %s\n" % cl.username)
 	      success = True
 	      good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
