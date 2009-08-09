@@ -55,7 +55,7 @@ class Bot:
 class Battle:
   def __del__(self):
     debug("Battle %i destroyed" % self.id)
-  def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname,founder,hostip,id):
+  def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname,founder,hostip,id,lanip):
     self.type = typ
     self.nattype = nattype
     self.password = password
@@ -74,6 +74,7 @@ class Battle:
     self.modname = modname
     self.players = []
     self.hostip = hostip
+    self.lanip = lanip
     self.founder = founder
     self.players.append(founder)
     self.disabledunits = []
@@ -82,8 +83,14 @@ class Battle:
       self.passworded = 0
     else:
       self.passworded = 1
-  def forgebattleopened(self):
-    s = "BATTLEOPENED %i %s %s %s %s %s %s %s %s %s %s\n" % ( self.id,self.type,self.nattype,self.founder,self.hostip,self.port,self.maxplayers,self.passworded,self.minrank,self.maphash,'\t'.join([self.mapname,self.title,self.modname]))
+  def forgebattleopened(self,client=None):
+    ip = ""
+    if client and self.lanip != "*" and client.ip[0] == self.hostip:
+      ip = self.lanip
+    else:
+      ip = self.hostip
+	
+    s = "BATTLEOPENED %i %s %s %s %s %s %s %s %s %s %s\n" % ( self.id,self.type,self.nattype,self.founder,ip,self.port,self.maxplayers,self.passworded,self.minrank,self.maphash,'\t'.join([self.mapname,self.title,self.modname]))
     return s
   def forgeupdatebattleinfo(self):
     s = "UPDATEBATTLEINFO %i %i %i %s %s\n" % (self.id,self.speccount,self.locked,self.maphash,self.mapname)
@@ -203,7 +210,8 @@ class Client:
     self.main = mainist
     self.loginlock = threading.Lock()
     self.loggingin = False
-    self.ip = ip
+    self.ip = [ip[0],ip[1]]
+    
     self.sql = False
     self.lgstatus = 0 # 0 Just connected,1: Logged in
     self.username = ""
@@ -216,9 +224,9 @@ class Client:
     self.battlestatus = "0"
     self.mod = 0
     if ip[0] == "127.0.0.1" or ip[0].startswith("192.168.1"):
-      self.country = "IT"
-    else:
-      self.country = ip2country.lookup(self.ip[0])
+      self.ip[0] = self.main.externip
+    self.country = ip2country.lookup(self.ip[0])
+      
     self.bot = 0
     self.admin = 0
     self.ist = ist

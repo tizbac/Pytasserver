@@ -169,7 +169,7 @@ try:
 		  c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
 	      battles = dict(self.main.battles)
 	      for b2 in battles:
-		c.send(battles[b2].forgebattleopened())
+		c.send(battles[b2].forgebattleopened(cl))
 		c.send(battles[b2].forgeupdatebattleinfo())
 		for u in battles[b2].players:
 		  c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))

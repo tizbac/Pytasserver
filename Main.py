@@ -17,6 +17,7 @@ Copyright (C) 2009  Tiziano Bacocco
 import socket
 import string
 import thread
+import signal
 import time
 import sys
 import traceback
@@ -34,6 +35,7 @@ from utilities import *
 import _mysql as mysql
 import Handler
 import zlib
+import urllib
 from BanClient import *
 import threading
 from CommandLimit import *
@@ -227,6 +229,12 @@ class Main:
   def __del__(self):
     debug("Main instance destroyed")
   def __init__(self,flags):
+    self.externip = "127.0.0.1"
+    self.signaldict = dict()
+    for s in dir(signal):
+      if s.startswith("SIG"):
+	exec "self.signaldict[signal.%s] = \"%s\"" % ( s,s)
+    #print self.signaldict
     self.clientsusernames = dict()
     self.clientsaccid = dict()
     self.allclients = dict()
@@ -237,6 +245,22 @@ class Main:
     self.msGZ = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     self.debug = "d" in flags
     self.ipregex = re.compile("\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b")
+  def updateexternipthread(self):
+    while 1:
+      try:
+	  u = urllib.urlopen("http://tiztracker.altervista.org/ip.php")
+	  ip = u.read()
+	  u.close()
+	  ip2 = ip.strip(" \r\n\t")
+	  if self.ipregex.match(ip2):
+	    self.externip = ip2
+	  else:
+	    error("Got invalid ip: "+ip2)
+      except:
+	  error("Failed to get ip")
+      time.sleep(240.0)
+      
+    
   def syncallthread(self):
     if self.sql:
       while 1:
@@ -262,6 +286,17 @@ class Main:
   def reloadcommandtable(self):
     for h in self.handlers:
       h.reloadcommands()
+  def broadcastEX(self,func,exc=None):
+    for h in self.handlers:
+      for c in dict(h.clients):
+	try:
+	  if c in h.clients and h.clients[c].lgstatus > 0 and c != exc:
+	    try:
+	      h.clients[c].sso.send(func(h.clients[c]))
+	    except:
+	      pass
+	except:
+	  pass
   def broadcast(self,cmd,exc=None):
     for h in self.handlers:
       for c in dict(h.clients):
@@ -375,6 +410,34 @@ class Main:
     else:
       error("getaccountbyid(%s) : MYSQL is not enabled" %str(id))
     return accname
+  def onsignal(self,sig,stk):
+    notice("Shutting down on %s..."% str(self.signaldict[sig]))
+    self.broadcast("SERVERMSGBOX Server received singnal %s, Exiting\n" % str(self.signaldict[sig]))
+    if sig == signal.SIGSEGV:
+      ans = raw_input(red+"************** WARNING: RECEIVED SIGSEGV, SYNCING USERS MAY CAUSE CORRUPTION, CONTINUE ( any other answer than 'yes' will mean NO) ? [yes/no] "+normal)
+      if ans.lower().strip() != "yes":
+	raise SystemExit(-2)
+    for h in self.handlers:
+      for c in h.clients:
+	s = h.clients[c].sso.sck
+	try:
+	  for x in list(h.clients[c].sso.buf):
+	    z = x
+	    
+	    s.send(z)
+	    if self.main.debug:#and z.strip("\n") != "PING":
+	      debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
+	      
+	    self.clients[s].sso.buf.remove(x)
+	except:
+	  pass
+	if h.clients[c].sql:
+	  try:
+	    h.clients[c].sync(self.database)
+	  except:
+	    error("Cannot sync player <%s>" % h.clients[c].username)
+	    error(traceback.format_exc())
+    good("Server shutdown complete.")
   def validateusername(self,uname):
     if len(uname) <= self.maxunamelen:
       if bool(self.unamer.match(uname)):
@@ -384,9 +447,28 @@ class Main:
     else:
       return (False,"Max username length is %i characters" % self.maxunamelen)
   def run(self):
+    signal.signal(signal.SIGINT,self.onsignal)
+    signal.signal(signal.SIGTERM,self.onsignal)
+    signal.signal(signal.SIGHUP,self.onsignal)
+    signal.signal(signal.SIGSEGV,self.onsignal)
+    #signal.signal(signal.SIGFLT,self.onsignal)
     self.conf = readconfigfile("Server.conf")
     self.sql = False
     self.au = False
+    
+    thread.start_new_thread(self.updateexternipthread,())
+    try:
+	u = urllib.urlopen("http://tiztracker.altervista.org/ip.php")
+	ip = u.read()
+	u.close()
+	ip2 = ip.strip(" \r\n\t")
+	if self.ipregex.match(ip2):
+	  self.externip = ip2
+	  good("External IP: "+ip2)
+	else:
+	  error("Got invalid ip: "+ip2)
+    except:
+	error("Failed to get ip")
     self.unamers = "\A[a-zA-Z-0-9]+?\Z"
     self.unamer = re.compile("\A[a-zA-Z-0-9]+?\Z")
     self.climit = "commandlimit" in self.conf and self.conf["commandlimit"] == "1"
@@ -501,30 +583,6 @@ class Main:
 	    
 	  except:
 	    error(traceback.format_exc())
-    except KeyboardInterrupt:
-      self.broadcast("SERVERMSGBOX Server received SIGINT, Exiting\n")
-      for h in self.handlers:
-
-	for c in h.clients:
-	  s = h.clients[c].sso.sck
-	  try:
-	    for x in list(h.clients[c].sso.buf):
-	      z = x
-	      
-	      s.send(z)
-	      if self.main.debug:#and z.strip("\n") != "PING":
-		debug("%s Sent:%s" % (cl.username,z.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue)))
-		
-	      self.clients[s].sso.buf.remove(x)
-	  except:
-	    pass
-	  if h.clients[c].sql:
-	    try:
-	      h.clients[c].sync(self.database)
-	    except:
-	      error("Cannot sync player <%s>" % h.clients[c].username)
-	      error(traceback.format_exc())
-      raise SystemExit(0)
     except:
       error(traceback.format_exc())
       raise SystemExit(0)
