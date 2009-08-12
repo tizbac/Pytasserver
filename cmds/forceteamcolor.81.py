@@ -11,7 +11,7 @@ if len(args) == 3:
 	tu = self.main.allclients[self.main.clientsusernames[args[1].lower()].sck]
 	tu.battlestatus.teamcolor = str(args[2])
 	bs = tu.getbattlestatus()
-	self.main.broadcastbattle(cl.battle,"CLIENTBATTLESTATUS %s %s\n" % (tu.username,bs))
+	self.main.broadcastbattle(cl.battle,"CLIENTBATTLESTATUS %s %s %s\n" % (tu.username,bs,tu.battlestatus.teamcolor))
       else:
 	raise CommandError("Color should be an integer")
     else:
