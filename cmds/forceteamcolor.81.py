@@ -12,7 +12,11 @@ if len(args) == 3:
 	tu.battlestatus.teamcolor = str(args[2])
 	bs = tu.getbattlestatus()
 	self.main.broadcastbattle(cl.battle,"CLIENTBATTLESTATUS %s %s\n" % (tu.username,bs))
-elif cl.battle in self.main.battles and self.main.battles[cl.battle].founder != cl.username:
-  c.send("SERVERMSG Error: Only the battle founder can use that command\n")
+      else:
+	raise CommandError("Color should be an integer")
+    else:
+      raise CommandError("Player %s is not in the battle"%args[1])
+  else:
+    raise CommandError("You have invalid battle id or you aren't battle founder")
 else:
-  c.send("SERVERMSG Error: You are not hosting\n")
+  raise CommandError("Wrong number of arguments")
