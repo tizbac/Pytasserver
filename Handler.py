@@ -186,7 +186,8 @@ class Client:
     s2 = dec2bin(self.getaccessflags(),6)
     for b in s:
       if bool(int(b)):
-	r = r and ( bool(int(s2[i])))
+	
+	r = i < len(s2) and r and ( bool(int(s2[i])))
 	if r == False:
 	  x = "You haven't '%s' flag" % self.privtable[i]
 	  break
