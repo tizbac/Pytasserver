@@ -135,7 +135,7 @@ def clientthreadrecv(sock,csock):
   print "Thread exited"
 ms = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 ms.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR,ms.getsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR) | 1 )
-ms.bind(("",8201))
+ms.bind(("localhost",8201))
 
 ms.listen(5)
 while 1:
