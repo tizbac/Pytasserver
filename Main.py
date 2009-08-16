@@ -60,14 +60,23 @@ from CommandLimit import *
 class compressedsocket:
   def __init__(self,sock):
     self.sock = sock
-    
+    self.datatosend = ""
     self.co = zlib.compressobj(9)
     self.sock.send(self.co.flush(zlib.Z_SYNC_FLUSH))
     self.dc = zlib.decompressobj()
+  def close(self):
+    self.sock.close()
+  def flush(self):
+    self.send("")#Will cause flush
   def send(self,data):
-    self.co.compress(data)
-    self.sock.send(self.co.flush(zlib.Z_SYNC_FLUSH))
-    
+    if len(self.datatosend) > 0 or len(data) > 0:
+            self.co.compress(data)
+            dts = self.datatosend + self.co.flush(zlib.Z_SYNC_FLUSH)
+            bs = self.sock.send(dts)
+            self.datatosend = ""
+            if bs != len(dts):
+                self.datatosend = dts[bs-1:]
+    return len(data)
   def recv(self,sz):
     data = self.sock.recv(sz)
     #debug("Compressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
@@ -98,7 +107,7 @@ def listengzip(self):
 	  if k < l:
 	    lh = hln[k]
 	    l = k
-	ist = Handler.Client(ip,cs,lh)
+	ist = Handler.Client(ip,cs,lh,self)
 	lh.clients.update([(cs,ist)])
 	lh.pollobj.register(cs.sock,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
 	self.allclients.update([(cs,ist)])

@@ -108,6 +108,8 @@ class ssock:
   def Flush(self,Final=False):
     i = 0
     bufsafe = list(self.buf)
+    if str(self.sck).startswith("<__main__.compressedsocket"):
+        self.sck.flush()
     if Final:
       try:
 	for x in list(self.buf):
@@ -122,10 +124,15 @@ class ssock:
       try:
 	for x in bufsafe:
 	  z = str(x)
-	  bytessent = self.sck.send(z)
-	  if bytessent == len(z):
-	    self.buf.remove(x)
+	  bytestosend = len(z)
+          bytessent = self.sck.send(z)
+	  if bytessent == bytestosend:
+	    try:
+	        self.buf.remove(x)
+	    except:
+	        pass
 	  else:
+	     #print "Sent incomplete data"
 	    self.buf.remove(x)
 	    self.buf.insert(0,z[bytessent:])
 	    break

@@ -63,4 +63,4 @@ try:
 	  f = raw_input()
 	  sock.send(f+"\n")
 except KeyboardInterrupt:
-	print "TX Compression : %f , RX Compression : %f" % (float(sock.txc)/float(sock.tx)*100.0,float(sock.rxc)/float(sock.rx)*100.0)
+	print "TX Compression Ratio: %f , RX Compression Ratio: %f" % (float(sock.txc)/float(sock.tx)*100.0,float(sock.rxc)/float(sock.rx)*100.0)
