@@ -141,7 +141,7 @@ ms.listen(5)
 while 1:
   cs,ip = ms.accept()
   connsock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-  connsock.connect(("localhost",8205))
+  connsock.connect((sys.argv[1],8205))
   zs = compressedsocket(connsock)
   cs.settimeout(5)
   zs.sock.settimeout(5)
