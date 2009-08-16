@@ -23,8 +23,10 @@ import sys
 import traceback
 import pdb
 import os
+import pickle
 import re
 import select
+from ClassDump import *
 import base64
 from cStringIO import StringIO
 import md5
@@ -437,7 +439,12 @@ class Main:
 	  except:
 	    error("Cannot sync player <%s>" % h.clients[c].username)
 	    error(traceback.format_exc())
+    del self.database
+    if sig == signal.SIGSEGV or sig == signal.SIGABRT:
+	    self.dump()
     good("Server shutdown complete.")
+    
+    #self.exitcode = 1 #Server has been terminated / killed and must not restart
   def validateusername(self,uname):
     if len(uname) <= self.maxunamelen:
       if bool(self.unamer.match(uname)):
@@ -446,11 +453,22 @@ class Main:
 	return (False,"Username must match regex %s" % self.unamers)
     else:
       return (False,"Max username length is %i characters" % self.maxunamelen)
+  def dump(self):
+    filename = "ServerState.%s.dump"%(str(time.time()))
+    notice("Dumping server state...")
+    f = file(filename,"w")
+    inst = Dumper()
+    data = inst.dump("self",self)
+    f.write(data)
+    f.close()
+    good("Server dump complete")
+    return filename
   def run(self):
     signal.signal(signal.SIGINT,self.onsignal)
     signal.signal(signal.SIGTERM,self.onsignal)
     signal.signal(signal.SIGHUP,self.onsignal)
     signal.signal(signal.SIGSEGV,self.onsignal)
+    signal.signal(signal.SIGABRT,self.onsignal)
     #signal.signal(signal.SIGFLT,self.onsignal)
     self.conf = readconfigfile("Server.conf")
     self.sql = False
@@ -590,4 +608,5 @@ if len(sys.argv) > 1:
   ist = Main(sys.argv[1])
 else:
   ist = Main("")
-ist.run()
+
+ret = ist.run()
