@@ -13,7 +13,7 @@ debug = False
 def onlogin(data):
   cid = unpack("H",data[:2])[0]
   username = parsetag(data[2:])[1]
-  ist.forgemsg(cid,"ADDUSER ChanServ ?? 0\nCLIENTSTATUS ChanServ 64")
+  ist.forgemsg(cid,"ADDUSER ChanServ ?? 0\nCLIENTSTATUS ChanServ 64\n")
   
 def onjoinchannel(data):
   cid = unpack("H",data[:2])[0]
