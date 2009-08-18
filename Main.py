@@ -244,7 +244,7 @@ class Main:
     self.channels[channame].topicsetby =by
     self.channels[channame].topichangedtime = time.time()
     self.broadcastchannel(channame,"CHANNELTOPIC %s %s %i %s\n" % (channame,self.channels[channame].topicsetby,int(self.channels[channame].topichangedtime*1000),self.channels[channame].topic))
-    if self.main.sql:
+    if self.sql:
       self.channels[channame].sync(self.database)
   def reloadcommandtable(self):
     for h in self.handlers:
