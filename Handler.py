@@ -324,11 +324,7 @@ class Handler:
 	self.accesstable.update([(f.split(".")[0].lower(),int(f.split(".")[1]))])
     good("Handler %i: Commands reloaded succesful :)" % self.id)
   def remove(self,c,reason):
-    try:
-      if self.main.services and c in self.clients:
-	self.main.services.onclientremoved(self.clients[c],reason)
-    except:
-      error("Failed to send the client removed event to services interface:%s" % str(sys.exc_value))
+    
       
     try:
       
@@ -339,6 +335,11 @@ class Handler:
 	  try:
 	    for ch in list(self.main.channels):
 	      if self.clients[c].oldname in self.main.channels[ch].users:
+		if self.main.services:
+		  try:
+		    self.main.services.onclientleftchannel(self.clients[c],ch)
+		  except:
+		    error("Cannot send onclientleftchannel event to services"+traceback.format_exc())
 		self.main.broadcastchannel(ch,"LEFT %s %s %s\n" % (ch,self.clients[c].oldname,reason))
 		self.main.channels[ch].users.remove(self.clients[c].oldname)
 		if len(self.main.channels[ch].users) == 0 and not self.main.channels[ch].confirmed:
@@ -392,6 +393,11 @@ class Handler:
 	  except:
 	    error("Cannot sync player <%s> to database: %s" % (self.clients[c].username,traceback.format_exc()))
 	self.clients[c].loginlock.release()
+	try:
+	  if self.main.services and c in self.clients:
+	    self.main.services.onclientremoved(self.clients[c],reason)
+	except:
+	  error("Failed to send the client removed event to services interface:%s" % str(sys.exc_value))
 	del self.clients[c]
     except:
       print '-'*60
@@ -559,6 +565,11 @@ class Handler:
 	      cmds = cl.inbuf.split("\n")
 	      cl.inbuf = ""
 	      for cm in cmds:
+		try:
+		  if self.main.services:
+		    self.main.services.onclientsent(cl,cm+"\n")
+		except:
+		  error("Broadcasting client data to services")
 		if self.main.debug and cm != "":
 		  debug("%s Received:%s" % (cl.username,cm+red+"\n"+blue))
 		args = cm.strip("\r ").split(" ")

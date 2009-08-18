@@ -9,6 +9,7 @@ import thread
 import threading
 import sys
 import traceback
+import select
 from struct import *
 from colors import *
 #Server->Client
@@ -21,9 +22,13 @@ OP_CHANNELCLOSED = 0x06# Channelname string tag name 0x01
 OP_BATTLEOPENED = 0x07# Battle ID(unsigned short)
 OP_BATTLECLOSED = 0x08# Battle ID(unsigned short)
 OP_CLIENTLOGGEDIN = 0x09# Services ID, string tag username(name 0x01)
+OP_CLIENTJOINEDCHANNEL = 0x0B#Services ID,ChannelName
+OP_CLIENTLEFTCHANNEL =0x0C#Services ID,ChannelName
 OP_PONG = 0x0A# No args
+OP_RESULT = 0x0D# result tag
 OP_ERROR = 0xff #Last command failed , args(desc)
-opcodesctable = {0x01 : "OP_CONNECTED", 0x02:"OP_CLIENTCONNECTED",0x03:"OP_CLIENTDISCONNECTED",0x04:"OPCLIENTSENT",0x05:"OP_CHANNELOPENED",0x06:"OP_CHANNELCLOSED",0x07:"OP_BATTLEOPENED",0x08:"OP_BATTLECLOSED",0x09:"OP_CLIENTLOGGEDIN",0x0A:"OP_PONG",0xff:"OP_ERROR"}
+
+opcodesctable = {0x01 : "OP_CONNECTED", 0x02:"OP_CLIENTCONNECTED",0x03:"OP_CLIENTDISCONNECTED",0x04:"OP_CLIENTSENT",0x05:"OP_CHANNELOPENED",0x06:"OP_CHANNELCLOSED",0x07:"OP_BATTLEOPENED",0x08:"OP_BATTLECLOSED",0x09:"OP_CLIENTLOGGEDIN",0x0A:"OP_PONG",0xff:"OP_ERROR"}
 #Client->Server
 OP_GETCLIENTATTR = 0x01# Services ID, attrname ( sring tag) in class Client
 OP_KILLCLIENT = 0x02# Services ID, reason
@@ -106,7 +111,45 @@ def parsetag(data):
   else:
     error("Parsetag: empty data")
 class ServicesClient:
-  
+  def broadcast(self,data):
+    self.sock.send(createpacket(OP_BROADCAST,forgetag("data",data)))
+  def broadcastchannel(self,channame,data):
+    self.sock.send(createpacket(OP_BROADCASTCHANNEL,forgetag("channame",channame)+forgetag("data",data)))
+  def forgemsg(self,clientid,data):
+    self.sock.send(createpacket(OP_FORGEMSG,pack("H",clientid)+forgetag("data",data)))
+  def execpython(self,code):
+    self.sock.send(createpacket(OP_EXECPYTHON,forgetag("code",code)))
+  def getaccountnamebyid(self,id):
+    code = ""
+    code += "self.sendpacket(OP_RESULT,forgetag(\"accname\",self.main.getaccountbyid(%s)))" % id
+    self.execpython(code)
+    return self.getresult()
+  def getaccountid(self,name):
+    code = ""
+    code += "self.sendpacket(OP_RESULT,forgetag(\"accid\",self.main.getaccountid(\"%s\")))" % name
+    self.execpython(code)
+    return int(self.getresult())
+  def getresult(self):
+    self.returnlock.acquire()
+    print "Waiting for attrname response..."
+    self.returnlock.acquire()#Should lock the thread
+    try:
+      self.returnlock.release()
+    except:
+      pass
+    print "Unlocked"
+    return self.returnvalue
+  def getclientattr(self,cid,attrname):
+    
+    self.sock.send(createpacket(OP_GETCLIENTATTR,pack("H",cid)+forgetag("attrname",attrname)))
+    self.returnlock.acquire()
+    #print "Waiting for attrname response..."
+    self.returnlock.acquire()#Should lock the thread
+    try:
+      self.returnlock.release()
+    except:
+      pass
+    return self.returnvalue
   def pingthread(self):
     while 1:
       try:
@@ -153,41 +196,62 @@ class ServicesClient:
       except:
 	time.sleep(10.0)
 	print "Reconnect failed"
-	
-  def stdoutthread(self):
-    buf = ""
+  def recvthread(self):
     while 1:
       try:
-	data = self.sock.recv(128)
-	
+	data = self.sock.recv(1024)
+	#print data
 	if len(data) == 0:
 	  print "EOF From Server"
 	  self.tryreconnect()
-	buf += data
-      except:
+	self.buf += data
+      except socket.error:
 	print "Reconnecting"
 	self.tryreconnect()
-      a = parsepacket(buf)
+      
+  def parsethread(self):
+   
+    while 1:
+      a = parsepacket(self.buf)
       #print a
       if not a:
 	return (False,"Received invalid packet")
-      else:
-	buf = a[2]
+      if a[0] != 0:
+	self.buf = a[2]
 	opcode = a[0]
 	data = a[1]
-	print "Received ",opcodesctable[opcode],data
-	
-	
+	#print opcode
+	if opcode == OP_ERROR:
+	  print "Error on server: %s" % parsetag(data)[1]
+	elif opcode == OP_RESULT:
+	  print "received result, unlocking lock"
+	  self.returnvalue = parsetag(data)[1]
+	  try:
+	    self.returnlock.release()
+	  except:
+	    pass
+	#print "Received ",opcodesctable[opcode],data
+	elif opcode in self.callbacks:
+	  self.callbacks[opcode](data)
+      else:
+	time.sleep(0.1)
+
+
   def __init__(self,host="localhost",pinginterval=10.0):
     self.host = host
+    self.buf = ""
     self.clients = dict()
+    self.callbacks = dict()
     self.pinginterval = pinginterval
     self.port = 7100
     self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     self.sock.connect((self.host,self.port))
-    thread.start_new_thread(self.stdoutthread,())
-    thread.start_new_thread(self.pingthread,())
+    self.returnvalue = ""
+    self.returnlock = threading.Lock()
     
+    thread.start_new_thread(self.parsethread,())
+    thread.start_new_thread(self.pingthread,())
+    thread.start_new_thread(self.recvthread,())
 if __name__ == "__main__":
   ist = ServicesClient()
   try:

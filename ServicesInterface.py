@@ -7,6 +7,7 @@ from struct import *
 import time
 import thread
 import threading
+import pickle
 import sys
 import traceback
 from colors import *
@@ -21,7 +22,11 @@ OP_BATTLEOPENED = 0x07# Battle ID(unsigned short)
 OP_BATTLECLOSED = 0x08# Battle ID(unsigned short)
 OP_CLIENTLOGGEDIN = 0x09# Services ID, string tag username(name 0x01)
 OP_PONG = 0x0A# No args
+OP_CLIENTJOINEDCHANNEL = 0x0B#Services ID,ChannelName
+OP_CLIENTLEFTCHANNEL =0x0C#Services ID,ChannelName
+OP_RESULT = 0x0D# result tag
 OP_ERROR = 0xff #Last command failed , args(desc)
+
 #Client->Server
 OP_GETCLIENTATTR = 0x01# Services ID, attrname ( sring tag) in class Client
 OP_KILLCLIENT = 0x02# Services ID, reason
@@ -140,21 +145,40 @@ class ServicesClient:
 	datatag = parsetag(channeltag[2])
 	self.main.broadcastchannel(channeltag[1],datatag[1])
       if opcode == OP_BROADCASTBATTLE and len(data) > 2:
-	battleid = struct.unpack("H",data[:2])
+	battleid = struct.unpack("H",data[:2])[0]
 	datatag = parsetag(data[2:])
 	self.main.broadcastbattle(battleid,datatag[1])
       if opcode == OP_SETCLIENTATTR and len(data) > 2:
-	servid = struct.unpack("H",data[:2])
+	servid = struct.unpack("H",data[:2])[0]
 	attrnametag = parsetag(data[2:])
 	valuetag = parsetag(attrnametag[2])
-	self.main.allclients[self.serverclients[servid]] = valuetag[1]
+	exec "self.services.serverclients[servid].%s = valuetag[1]" % attrnametag[1]
+      if opcode == OP_GETCLIENTATTR and len(data) > 2:
+	#print "Received OP_GETCLIENTATTR"
+	servid = struct.unpack("H",data[:2])[0]
+	attrnametag = parsetag(data[2:])
+	self.main.allclients[self.services.serverclients[servid].sso.sck]
+	try:
+	  exec "value = str(self.services.serverclients[servid].%s)"% attrnametag[1]
+	except:
+	  self.sendpacket(OP_ERROR,forgetag(0x01,str(sys.exc_value)))
+	  value = ""
+	self.sendpacket(OP_RESULT,forgetag("value",value))
+	#print "Sent OP_RESULT"
       if opcode == OP_FORGEMSG and len(data) > 2:
-	servid = struct.unpack("H",data[:2])
+	servid = struct.unpack("H",data[:2])[0]
 	datatag = parsetag(data[2:])
-	self.main.allclients[self.serverclients[servid]].send(datatag[1])
+	self.services.serverclients[servid].sso.send(datatag[1])
       if opcode == OP_EXECPYTHON and len(data) > 0:
-	codetag = parsetag(data)
-	exec codetag[1]
+	#print "OP_EXECPYTHON"
+	try:
+	  codetag = parsetag(data)
+	  exec codetag[1]
+	except:
+	  error("While executing Services code:"+traceback.format_exc())
+	  error("Code was:"+codetag[1])
+	  self.sendpacket(OP_ERROR,forgetag(0x01,str(sys.exc_value)))
+	  self.sendpacket(OP_RESULT,forgetag("value",""))
     except:
       self.sendpacket(OP_ERROR,forgetag(0x01,str(sys.exc_value)))
       
@@ -171,7 +195,7 @@ class ServicesClient:
     a = parsepacket(self.recvbuffer)
     if not a:
       return (False,"Received invalid packet")
-    else:
+    if a[0] != 0:
       self.recvbuffer = a[2]
       opcode = a[0]
       data = a[1]
@@ -179,12 +203,16 @@ class ServicesClient:
     return (True,None)
   def flush(self):
     #print time.time(),self.sendbuffer
+    y = ""
     try:
       for x in list(self.sendbuffer):
-	self.sock.send(x)
-	self.sendbuffer.remove(x)
+	y = str(x)
+	 #print "Try send "+str([y])
+	self.sock.send(y)
+	self.sendbuffer.remove(y)
     except:
-      print traceback.format_exc()
+      pass
+      #print "Failed sending "+str([y])
 class Services:
   def onclientcreated(self,client):
     debug("Services: onclientcreated "+str(client))
@@ -196,6 +224,12 @@ class Services:
 	self.serverclientsreverse[client] = i
 	break
     self.serverclientslock.release()
+  def onclientjoinedchannel(self,client,channame):
+    self.broadcast(OP_CLIENTJOINEDCHANNEL,struct.pack("H",self.serverclientsreverse[client])+forgetag("channel",channame))
+  def onclientleftchannel(self,client,channame):
+    self.broadcast(OP_CLIENTLEFTCHANNEL,struct.pack("H",self.serverclientsreverse[client])+forgetag("channel",channame))  
+  def onclientloggedin(self,client):
+    self.broadcast(OP_CLIENTLOGGEDIN,struct.pack("H",self.serverclientsreverse[client])+forgetag(0x01,client.username)) 
   def onclientremoved(self,client,reason):
     
     self.serverclientslock.acquire()
@@ -206,10 +240,10 @@ class Services:
     self.serverclientslock.release()
     debug("Services: onclientremoved "+str(client))
   def onclientsent(self,client,data): #Called when a client sends a line to server
-    self.broadcast(OP_CLIENTSENT,struct.pack("H",self.serverclientsreverse[client])[0]+forgetag("data",data))
-  
+    self.broadcast(OP_CLIENTSENT,struct.pack("H",self.serverclientsreverse[client])+forgetag("data",data))
+ 
   def broadcast(self,opcode,data):
-    print "broadcast ",[opcode,data]
+    #print "broadcast ",[opcode,data]
     self.clientslock.acquire()
     for cs in self.clients:
       self.clients[cs].sendpacket(opcode,data)

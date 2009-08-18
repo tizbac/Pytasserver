@@ -73,7 +73,8 @@ try:
 		for u in battles[b2].players:
 		  c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
 	      c.send("LOGININFOEND\n")
-
+	      if self.main.services:
+		self.main.services.onclientloggedin(cl)
 	    elif not self.main.au:
 	      #print str(args)+" LOGIN failed"
 	      cl.loginlock.release()
@@ -124,6 +125,8 @@ try:
 		    for u in battles[b2].players:
 		      c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
 		  c.send("LOGININFOEND\n")
+		  if self.main.services:
+		    self.main.services.onclientloggedin(cl)
 		else:
 		  cl.loginlock.release()
 		  c.send("DENIED %s\n" % (val[1]))
@@ -174,6 +177,8 @@ try:
 		for u in battles[b2].players:
 		  c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
 	      c.send("LOGININFOEND\n")
+	      if self.main.services:
+		self.main.services.onclientloggedin(cl)
 	    else:
 	      c.send("DENIED %s\n" % (val[1]))
 	      cl.loginlock.release()

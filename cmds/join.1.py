@@ -26,6 +26,8 @@ if len(args) >= 2:
 	    bstr = "%i%i%i" % (int(int(cli.accountid) in self.main.channels[args[1]].operators),int(int(cli.accountid) in self.main.channels[args[1]].mutes),int(cli.username == self.main.channels[args[1]].founder))
 	    c.send("CLIENTCHANNELSTATUS %s %s %i\n" % (args[1],cli.username,bin2dec(bstr)))   #CLIENTCHANNELSTATUS channel user status
 	self.main.broadcastchannel(args[1],"JOINED %s %s\n" % (args[1],cl.username),co)
+	if self.main.services:
+	  self.main.services.onclientjoinedchannel(cl,args[1])
 	if self.main.channels[args[1]].topic != "*":
 	  c.send("CHANNELTOPIC %s %s %i %s\n" % (args[1],self.main.channels[args[1]].topicsetby,int(self.main.channels[args[1]].topichangedtime*1000),self.main.channels[args[1]].topic))
       else:
@@ -43,3 +45,6 @@ if len(args) >= 2:
     c.send("CLIENTS %s %s\n" % ( args[1], ' '.join(self.main.channels[args[1]].users)))
     if self.main.channels[args[1]].topic != "*":
       c.send("CHANNELTOPIC %s %s %i %s\n" % (args[1],self.main.channels[args[1]].topicsetby,int(self.main.channels[args[1]].topichangedtime*1000),self.main.channels[args[1]].topic))#self.main.broadcastchannel(args[1],"JOINED %s %s\n" % (args[1],cl.username),c)
+    if self.main.services:
+      self.main.services.onclientjoinedchannel(cl,args[1])
+      
