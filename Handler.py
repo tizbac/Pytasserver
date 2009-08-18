@@ -34,7 +34,7 @@ class StartRect:
     self.right = float(right)
     self.bottom = float(bottom)  
   def forgeaddstartrect(self):
-    s = "ADDSTARTRECT %i %f %f %f %f\n" % (self.allyno,self.left,self.top,self.right,self.bottom)
+    s = "ADDSTARTRECT %i %i %i %i %i\n" % (self.allyno,int(self.left),int(self.top),int(self.right),int(self.bottom))#Converted to int cause it breaks spads
     return s
 class Bot:
   def __init__(self,owner,name,battlestatus,teamcolor,aidll=""):
