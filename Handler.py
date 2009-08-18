@@ -324,7 +324,12 @@ class Handler:
 	self.accesstable.update([(f.split(".")[0].lower(),int(f.split(".")[1]))])
     good("Handler %i: Commands reloaded succesful :)" % self.id)
   def remove(self,c,reason):
-    
+    try:
+      if self.main.services and c in self.clients:
+	self.main.services.onclientremoved(self.clients[c],reason)
+    except:
+      error("Failed to send the client removed event to services interface:%s" % str(sys.exc_value))
+      
     try:
       
       if c in self.clients:

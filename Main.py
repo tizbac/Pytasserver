@@ -40,6 +40,7 @@ import zlib
 import urllib
 from BanClient import *
 import threading
+from ServicesInterface import *
 from CommandLimit import *
 '''class Battle:
   def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname):
@@ -496,6 +497,12 @@ class Main:
 	  error("Got invalid ip: "+ip2)
     except:
 	error("Failed to get ip")
+    if "servicesport" in self.conf:
+      sport = int(self.conf["servicesport"])
+      notice("Starting services interface on port %i" % sport)
+      self.services = Services(sport,self)
+    else:
+      self.services = None
     self.unamers = "\A[a-zA-Z-0-9-\[-\]-_]+?\Z"
     self.unamer = re.compile("\A[a-zA-Z-0-9-\[-\]-_]+?\Z")
     self.climit = "commandlimit" in self.conf and self.conf["commandlimit"] == "1"
@@ -605,6 +612,11 @@ class Main:
 	    lh.clients.update([(cs,ist)])
 	    lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL )
 	    self.allclients.update([(cs,ist)])
+	    try:
+	      if self.services:
+		self.services.onclientcreated(ist)
+	    except:
+	      error("Failed to send the client created event to services interface:%s" % str(sys.exc_value))
 	    #print "Handler %i: %s" % (lh.id,str(lh.clients))
 	    good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
 	    
