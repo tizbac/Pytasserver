@@ -402,7 +402,16 @@ class Main:
   def validateusername(self,uname):
     if len(uname) <= self.maxunamelen:
       if bool(self.unamer.match(uname)):
-	return (True,"OK")
+        if "bannednames" in self.conf:
+           d = str2dict(self.conf["bannednames"])
+        else:
+           d = dict()
+        if uname.lower() not in d:
+          return (True,"OK")
+        else:
+          return (False,d[uname.lower()])
+       
+	
       else:
 	return (False,"Username must match regex %s" % self.unamers)
     else:
