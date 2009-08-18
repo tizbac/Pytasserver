@@ -496,11 +496,11 @@ class Main:
 	  error("Got invalid ip: "+ip2)
     except:
 	error("Failed to get ip")
-    self.unamers = "\A[a-zA-Z-0-9]+?\Z"
-    self.unamer = re.compile("\A[a-zA-Z-0-9]+?\Z")
+    self.unamers = "\A[a-zA-Z-0-9-\[-\]-_]+?\Z"
+    self.unamer = re.compile("\A[a-zA-Z-0-9-\[-\]-_]+?\Z")
     self.climit = "commandlimit" in self.conf and self.conf["commandlimit"] == "1"
     self.bcl = "banlistserverenabled" in self.conf and self.conf["banlistserverenabled"] == "1"
-    if "allowusernameregex" in self.conf:
+    if "usernameregex" in self.conf:
     	try:
     		self.unamer = re.compile(self.conf["usernameregex"])
 		self.unamers = self.conf["usernameregex"]

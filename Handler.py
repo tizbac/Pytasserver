@@ -540,14 +540,14 @@ class Handler:
 		  cl.lastbsreset = time.time()
 		#print "cl.bs > "+str(int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))+" = "+str(cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))
 		if cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]):
-		  self.remove(co,"Flood limit exceeded , Max flood is %i bytes/ %f seconds, current flood was %i" % (int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]),float(self.main.conf["floodlimitseconds"]),int(float(cl.bs)/float(self.main.conf["floodlimitseconds"]))))
+		  self.remove(co,"Flood limit exceeded , Max flood is %i bytes/ %f seconds, current flood was %i bytes/sec" % (int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]),float(self.main.conf["floodlimitseconds"]),int(float(cl.bs)/float(self.main.conf["floodlimitseconds"]))))
 	      else:
 		if time.time() - cl.lastbsreset > float(self.main.conf["botfloodlimitseconds"]) :
 		  cl.bs = 0
 		  cl.lastbsreset = time.time()
 		#print "cl.bs > "+str(int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))+" = "+str(cl.bs > int(self.main.conf["floodlimitbw"])*float(self.main.conf["floodlimitseconds"]))
 		if cl.bs > int(self.main.conf["botfloodlimitbw"])*float(self.main.conf["botfloodlimitseconds"]):
-		  self.remove(co,"BOT Flood limit exceeded , Max flood is %i bytes/%fseconds, current flood was %i" % (int(self.main.conf["botfloodlimitbw"])*float(self.main.conf["botfloodlimitseconds"]),float(self.main.conf["botfloodlimitseconds"]),int(float(cl.bs)/float(self.main.conf["botfloodlimitseconds"]))))
+		  self.remove(co,"BOT Flood limit exceeded , Max flood is %i bytes/%fseconds, current flood was %i bytes/sec" % (int(self.main.conf["botfloodlimitbw"])*float(self.main.conf["botfloodlimitseconds"]),float(self.main.conf["botfloodlimitseconds"]),int(float(cl.bs)/float(self.main.conf["botfloodlimitseconds"]))))
 
 		
 	    if cl.inbuf.endswith("\n"):
