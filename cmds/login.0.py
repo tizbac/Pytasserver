@@ -89,6 +89,10 @@ try:
   c.send("ACCEPTED %s\n" % cl.username)
   good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
   allclients = dict(self.main.allclients)
+  self.main.clientsusernames.update([(cl.username.lower(),c)])
+  self.main.clientsaccid.update([(cl.accountid,c)])
+  self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
+  self.main.broadcast("CLIENTSTATUS %s %i\n" % (cl.username,int(cl.getstatus())))
   for c2 in allclients:
     cl2 = allclients[c2]
     if cl2.lgstatus >= 1:
