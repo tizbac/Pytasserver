@@ -30,7 +30,7 @@ if len(args) >= 2:
 	tagname = bn[0].lower()
 	tagvalue = '='.join(bn[1:])
 	if len(bn) == 2 and len(self.main.battles[b].scripttags) < 129:
-	  self.main.battles[b].scripttags.update([tagname,tagvalue])
+	  self.main.battles[b].scripttags[tagname] = tagvalue
 	  #print self.main.battles[b].scripttags
       sts = ""
       stl = []
