@@ -25,9 +25,12 @@ if len(args) >= 2:
     if cl.username == self.main.battles[b].founder:
       for a in args2:
 	bn = a.split("=")
-	#print bn
+	if len(bn) < 2:
+	  continue
+	tagname = bn[0].lower()
+	tagvalue = '='.join(bn[1:])
 	if len(bn) == 2 and len(self.main.battles[b].scripttags) < 129:
-	  self.main.battles[b].scripttags.update([bn])
+	  self.main.battles[b].scripttags.update([tagname,tagvalue])
 	  #print self.main.battles[b].scripttags
       sts = ""
       stl = []
