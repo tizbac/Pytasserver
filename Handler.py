@@ -78,6 +78,7 @@ class Battle:
     self.founder = founder
     self.players.append(founder)
     self.disabledunits = []
+    self.replayscript = []
     self.id = id
     if password == "*":
       self.passworded = 0

@@ -12,7 +12,7 @@ if len(args) > 1:
       if un not in self.main.battles[cl.battle].disabledunits:
 	ue.append(un)
 	self.main.battles[cl.battle].disabledunits.append(un)
-    self.main.broadcastbattle(cl.battle,"DISABLEUNITS %s\n" % (' '.join(ue)),c)
+    self.main.broadcastbattle(cl.battle,"DISABLEUNITS %s\n" % (' '.join(ue)),co)
   elif cl.battle in self.main.battles and self.main.battles[cl.battle].founder != cl.username:
     c.send("SERVERMSG Error: Only the battle founder can use that command\n")
   else:

@@ -21,177 +21,95 @@ if not cl.loggingin:
   cl.loggingin = True
   cl.loginlock.acquire()
 try:
-	if len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() not in self.main.clientsusernames:
-	  if self.main.sql:
-	    self.main.database.query("SELECT name,password,playtime,accesslevel,bot,banned,casename,id FROM users WHERE name = '%s' AND password = '%s' LIMIT 1" % (self.main.database.escape(args[1]).lower(),self.main.database.escape(args[2])))
-	    res = self.main.database.store_result()
-	    if res.num_rows() >= 1:
-	      r2 = res.fetch_row()[0]
-	      cl.username = r2[6]
-	      cl.oldname = cl.username
-	      cl.accountid =int(r2[7])
-	      cl.password = r2[1]
-	      cl.sql = True
-	      cl.ptime = int(r2[2])
-	      cl.bot = int(r2[4])
-	      cl.lastlogin = int(time.time())
-	      if int(r2[3]) >= 2:
-		cl.mod = 1
-	      if int(r2[3]) >= 3:
-		cl.admin = 1
-	      try:
-		cl.cpu = int(args[3])
-	      except:
-		cl.cpu = 0
-	      if self.main.ipregex.match(args[4]):
-		cl.lanip = args[4]
-	      else:
-		cl.lanip = "*"
-	      c.send("ACCEPTED %s\n" % cl.username)
-	      success = True
-	      good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
-	      motd = "Hi %s! Welcome to pytasserver\n %i Connected players in %i opened battles" % ( cl.username,len(self.main.clientsusernames.keys()),len(self.main.battles))
-	      for l in motd.split("\n"):
-		c.send("MOTD %s\n" % l)
-	      self.main.clientsusernames.update([(cl.username.lower(),c)])
-	      self.main.clientsaccid.update([(cl.accountid,c)])
-	      self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
-	      self.main.broadcast("CLIENTSTATUS %s %i\n" % (cl.username,int(cl.getstatus())))
-	      cl.lgstatus = 1
-	      
-	      allclients = dict(self.main.allclients)
-	      for c2 in allclients:
-		cl2 = allclients[c2]
-		if cl2.lgstatus >= 1:
-		  c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
-		  newstatus = cl2.getstatus()
-		  c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
-	      battles = dict(self.main.battles)
-	      for b2 in battles:
-		c.send(battles[b2].forgebattleopened())
-		c.send(battles[b2].forgeupdatebattleinfo())
-		for u in battles[b2].players:
-		  c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
-	      c.send("LOGININFOEND\n")
-	      if self.main.services:
-		self.main.services.onclientloggedin(cl)
-	    elif not self.main.au:
-	      #print str(args)+" LOGIN failed"
-	      cl.loginlock.release()
-	      c.send("DENIED %s\n" % ("Bad username/password"))
-	      self.remove(co,"Bad login attempt, Unregistered login disabled")
-	    else:
-	      self.main.database.query("SELECT name FROM users WHERE name = '%s'" % (self.main.database.escape(args[1])))
-	      res = self.main.database.store_result()
-	      if res.num_rows() == 0:
-		val = self.main.validateusername(args[1])
-		if ( val[0] ):
-		  cl.username = args[1]
-		  cl.oldname = cl.username
-		  cl.password = args[2]
-		  cl.accountid = -int(time.time()*10000.0) #Hope that will not fail ;)
-		  cl.sql = False
-		  try:
-		    cl.cpu = int(args[3])
-		  except:
-		    cl.cpu = 0
-		  if self.main.ipregex.match(args[4]):
-		    cl.lanip = args[4]
-		  else:
-		    cl.lanip = "*"
-		  c.send("ACCEPTED %s\n" % cl.username)
-		  success = True
-		  good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
-		  motd = "Hi %s! Welcome to pytasserver\n %i Connected players in %i opened battles\nTo save your progress and/or register channels or get a bot flag you will need to register" % ( args[1],len(self.main.clientsusernames.keys()),len(self.main.battles))
-		  for l in motd.split("\n"):
-		    c.send("MOTD %s\n" % l)
-		  self.main.clientsusernames.update([(cl.username.lower(),c)])
-		  self.main.clientsaccid.update([(cl.accountid,c)])
-		  self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
-		  self.main.broadcast("CLIENTSTATUS %s %i\n" % (cl.username,int(cl.getstatus())))
-		  cl.lgstatus = 1
-		  
-		  allclients = dict(self.main.allclients)
-		  for c2 in allclients:
-		    cl2 = allclients[c2]
-		    if cl2.lgstatus >= 1:
-		      c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
-		      newstatus = cl2.getstatus()
-		      c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
-		  battles = dict(self.main.battles)
-		  for b2 in battles:
-		    c.send(battles[b2].forgebattleopened())
-		    c.send(battles[b2].forgeupdatebattleinfo())
-		    for u in battles[b2].players:
-		      c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
-		  c.send("LOGININFOEND\n")
-		  if self.main.services:
-		    self.main.services.onclientloggedin(cl)
-		else:
-		  cl.loginlock.release()
-		  c.send("DENIED %s\n" % (val[1]))
-		  self.remove(co,"Bad login attempt")
-	      else:
-		cl.loginlock.release()
-		c.send("DENIED %s\n" % ("Username exists in database"))
-		self.remove(co,"Bad login attempt")
-	  else:
-	    val = self.main.validateusername(args[1])
-	    if ( val[0] ):
-	      cl.username = args[1]
-	      cl.oldname = cl.username
-	      cl.password = args[2]
-	      try:
-		cl.cpu = int(args[3])
-	      except:
-		cl.cpu = 0
-	      if self.main.ipregex.match(args[4]):
-		cl.lanip = args[4]
-	      else:
-		cl.lanip = "*"
-	      c.send("ACCEPTED %s\n" % cl.username)
-	      success = True
-	      good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
-	      motd = "Hi %s! Welcom to pytasserver\n %i Connected players in %i opened battles" % ( args[1],len(self.main.clientsusernames.keys()),len(self.main.battles))
-	      for l in motd.split("\n"):
-		c.send("MOTD %s\n" % l)
-	      for l in motd.split("\n"):
-		    c.send("MOTD %s\n" % l)
-	      self.main.clientsusernames.update([(cl.username.lower(),c)])
-	      self.main.clientsaccid.update([(cl.accountid,c)])
-	      self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
-	      self.main.broadcast("CLIENTSTATUS %s %i\n" % (cl.username,int(cl.getstatus())))
-	      cl.lgstatus = 1
-	      
-	      allclients = dict(self.main.allclients)
-	      for c2 in allclients:
-		cl2 = allclients[c2]
-		if cl2.lgstatus >= 1:
-		  c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
-		  newstatus = cl2.getstatus()
-		  c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
-	      battles = dict(self.main.battles)
-	      for b2 in battles:
-		c.send(battles[b2].forgebattleopened(cl))
-		c.send(battles[b2].forgeupdatebattleinfo())
-		for u in battles[b2].players:
-		  c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
-	      c.send("LOGININFOEND\n")
-	      if self.main.services:
-		self.main.services.onclientloggedin(cl)
-	    else:
-	      c.send("DENIED %s\n" % (val[1]))
-	      cl.loginlock.release()
-	      self.remove(co,"Bad login attempt")
-	elif len(args) >= 5 and cl.lgstatus < 1 and args[1].lower() in self.main.clientsusernames and not success:
-	  print args,len(args),cl.lgstatus,args[1].lower() in self.main.clientsusernames
-	  c.send("DENIED %s\n" % ("Already logged in"))
-	  cl.loginlock.release()
-	  self.remove(co,"Bad login attempt")
-	else:
-	 # print args,len(args),cl.lgstatus,args[1].lower() in self.main.clientsusernames
-	  cl.loginlock.release()
-	  self.remove(co,"Bad data")
+  r2 = None
+  lanclient = False
+  if len(args) < 5:
+    raise CommandError("Not enough args")
+  if cl.lgstatus > 0:
+    raise CommandError("Already Logged in with this connection")
+  if args[1].lower() in self.main.clientsusernames:
+    raise CommandError("An user with that name is already logged in")
+  if self.main.sql:
+    self.main.database.query("SELECT name,password,playtime,accesslevel,bot,banned,casename,id FROM users WHERE name = '%s' AND password = '%s' LIMIT 1" % (self.main.database.escape(args[1]).lower(),self.main.database.escape(args[2])))
+    res = self.main.database.store_result()
+    if res.num_rows() > 0:
+      r2 = res.fetch_row()[0]
+    elif self.main.au:
+      self.main.database.query("SELECT name FROM users WHERE name = '%s'" % (self.main.database.escape(args[1])))
+      res2 = self.main.database.store_result()
+      if res2.num_rows() != 0:
+	raise CommandError("An user with that name exists in database and you used wrong password")
+      else:
+	lanclient = True
+    else:
+      raise CommandError("Invalid username / password")
+  else:
+    lanclient = True
+    r2 = None
+  val = self.main.validateusername(args[1])
+  if not val[0] and not r2:
+    c.send("DENIED %s\n" % val[1])
+    raise CommandError("Invalid username")
+  if r2:
+    cl.username = r2[6]
+    cl.oldname = cl.username
+    cl.accountid =int(r2[7])
+    cl.password = r2[1]
+    cl.sql = not lanclient
+    cl.ptime = int(r2[2])
+    cl.bot = int(r2[4])
+    cl.lastlogin = int(time.time())
+    if int(r2[3]) >= 2:
+      cl.mod = 1
+    if int(r2[3]) >= 3:
+      cl.admin = 1
+    try:
+      cl.cpu = int(args[3])
+    except:
+      cl.cpu = 0
+    if self.main.ipregex.match(args[4]):
+      cl.lanip = args[4]
+    else:
+      cl.lanip = "*"
+  else:
+    cl.username = args[1]
+    cl.oldname = cl.username
+    cl.password = args[2]
+    cl.accountid = -int(time.time()*10000.0) #Hope that will not fail ;)
+    cl.sql = False
+    try:
+      cl.cpu = int(args[3])
+    except:
+      cl.cpu = 0
+    if self.main.ipregex.match(args[4]):
+      cl.lanip = args[4]
+    else:
+      cl.lanip = "*"
+  cl.lgstatus = 1
+  c.send("ACCEPTED %s\n" % cl.username)
+  good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
+  allclients = dict(self.main.allclients)
+  for c2 in allclients:
+    cl2 = allclients[c2]
+    if cl2.lgstatus >= 1:
+      c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
+      newstatus = cl2.getstatus()
+      c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
+  battles = dict(self.main.battles)
+  for b2 in battles:
+    c.send(battles[b2].forgebattleopened(cl))
+    c.send(battles[b2].forgeupdatebattleinfo())
+    for u in battles[b2].players:
+      c.send("JOINEDBATTLE %i %s\n" % (int(b2),u))
+  c.send("LOGININFOEND\n")
+  
+  if self.main.services:
+    self.main.services.onclientloggedin(cl)
+except CommandError:
+  cl.loginlock.release()
+  c.send("DENIED %s\n" % str(sys.exc_value))
+  self.remove(co,"Bad login attempt")
+  raise CommandError(str(sys.exc_value))
 except:
 	error("LOGIN")
 	error(traceback.format_exc())
