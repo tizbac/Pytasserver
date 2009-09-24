@@ -54,6 +54,7 @@ try:
     cl.username = r2[6]
     cl.oldname = cl.username
     cl.accountid =int(r2[7])
+
     cl.password = r2[1]
     cl.sql = not lanclient
     cl.ptime = int(r2[2])
@@ -85,6 +86,13 @@ try:
       cl.lanip = args[4]
     else:
       cl.lanip = "*"
+  if len(args) >= 6:
+    a2 = ' '.join(args[5:]).split("\t")
+    cl.lobbyversion = a2[0]
+    if len(a2) >= 2:
+            cl.userid = a2[1]
+            if len(a2) >= 3:
+                    cl.supportedfeatures = list(a2[2])
   cl.lgstatus = 1
   c.send("ACCEPTED %s\n" % cl.username)
   good("%s Logged in (Using sql = %s )" % (cl.username,str(cl.sql)))
@@ -96,7 +104,10 @@ try:
   for c2 in allclients:
     cl2 = allclients[c2]
     if cl2.lgstatus >= 1:
-      c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
+      if 'a' in cl.supportedfeatures:
+        c.send("ADDUSER %s %s %i %i\n" % (cl2.username,cl2.country,cl2.cpu,cl2.accountid))
+      else:
+        c.send("ADDUSER %s %s %i\n" % (cl2.username,cl2.country,cl2.cpu))
       newstatus = cl2.getstatus()
       c.send("CLIENTSTATUS %s %i\n" % (cl2.username,newstatus))
   battles = dict(self.main.battles)

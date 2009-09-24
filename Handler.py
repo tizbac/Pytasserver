@@ -211,6 +211,8 @@ class Client:
     #		     { 1 : "Logged in" , 2 : "Bot" , 4 : "Moderator", 8 : "Server administrator" , 16 : "In battle" , 32 : "Not in battle" , 64 : "Battlefounder"}
     self.accountid = 0
     self.supportedfeatures = [] 
+    self.userid = "" #Just to have it, it's useless
+    self.lobbyversion = "Unknown"
     # FEATURES: CLIENTCHANNELSTATUS, ZIPSTREAM, 250PLAYERS
     #
     #
