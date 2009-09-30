@@ -409,52 +409,59 @@ class Handler:
   def processcommand(self,args,cl,co,c):
     pass
   def ml(self):
+    lo = 0.0
     self.clients = dict()
     self.clientsusernames = dict()
     lastexpirecheck = time.time()#It limits ban & mute expire checks so they gets checked every sec also with a lot of load
     try:
       while 1:
 	#debug("Handler %i: %f %s" % (self.id,time.time(),str(self.needflush)))
+	
 	#time.sleep(0.02)
 	#iR,oR,eR = select.select(self.clients.keys(),self.clients.keys(),[],0.5)
 	iR = []
 	oR = list(self.clients.keys())
-	
-	pl = self.pollobj.poll(1 if self.needflush else 700)
-	#print pl
-	for fd in pl:
-	  pollin = bool((fd[1] >> 0) & 1)
-	  pollpri = bool((fd[1] >> 1) & 1)
-	  pollout = bool((fd[1] >> 2) & 1)
-	  pollerr = bool((fd[1] >> 3) & 1)
-	  pollhup = bool((fd[1] >> 4) & 1)
-	  pollnval = bool((fd[1] >> 5) & 1)
-	 # print pollin,pollpri,pollout,pollerr,pollhup,pollnval
-	  if pollin or pollpri:
-	    #print " %s ready to receive data" % str(fd)
-	    for s in list(self.clients.keys()):
-	      if s.fileno() == fd[0]:
-		newsocket = s
-	    iR.append(newsocket)
-	  if pollerr or pollhup or pollnval:
-	    print "Removing %s , socket error" % str(fd)
-	    
-	    for s in list(self.clients.keys()):
+	if "poll" in self.main.conf and self.main.conf["poll"] == "1":
+	  pl = self.pollobj.poll(1 if self.needflush else 700)
+	  _s = time.time()
+	  #print pl
+	  for fd in pl:
+	    pollin = bool((fd[1] >> 0) & 1)
+	    pollpri = bool((fd[1] >> 1) & 1)
+	    pollout = bool((fd[1] >> 2) & 1)
+	    pollerr = bool((fd[1] >> 3) & 1)
+	    pollhup = bool((fd[1] >> 4) & 1)
+	    pollnval = bool((fd[1] >> 5) & 1)
+	   # print pollin,pollpri,pollout,pollerr,pollhup,pollnval
+	    if pollin or pollpri:
+	      #print " %s ready to receive data" % str(fd)
+	      for s in list(self.clients.keys()):
+	        if s.fileno() == fd[0]:
+		  newsocket = s
+	      iR.append(newsocket)
+	    if pollerr or pollhup or pollnval:
+	      print "Removing %s , socket error" % str(fd)
+	      
+	      for s in list(self.clients.keys()):
+	        try:
+		  print "%i == %i = %s" % (fd[0],s.fileno(),str(fd[0] == s.fileno()))
+		  if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
+		    if pollhup:
+		      self.remove(s,"Poll Error: Connection reset by peer")
+		    elif pollnval:
+		      self.remove(s,"Poll Error: Bad file descriptor")
+		    elif pollerr:
+		      self.remove(s,"Poll Error: Socket Exception")
+	        except:
+		  pass
 	      try:
-		print "%i == %i = %s" % (fd[0],s.fileno(),str(fd[0] == s.fileno()))
-		if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
-		  if pollhup:
-		    self.remove(s,"Poll Error: Connection reset by peer")
-		  elif pollnval:
-		    self.remove(s,"Poll Error: Bad file descriptor")
-		  elif pollerr:
-		    self.remove(s,"Poll Error: Socket Exception")
+	        self.pollobj.unregister(fd[0])
 	      except:
-		pass
-	    try:
-	      self.pollobj.unregister(fd[0])
-	    except:
-	      pass
+	        pass
+        else:
+          iR = list(self.clients.keys())
+          time.sleep(0.05)
+          _s = time.time()
 	#print iR
 	#if not self.needflush:
 	#  print "Sleep: ",self.needflush
@@ -623,7 +630,14 @@ class Handler:
 		  #if not sys.exc_value[1] == "Resource temporarily unavailable":
 		  # self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
 		
-	self.needflush = False	    
+	self.needflush = False
+	#debug("Handler End %i: %f %s" % (self.id,time.time(),str(self.needflush)))
+	_e = time.time()
+	#debug("Diff: %f"%(_e-_s))
+	if _e-_s > 0.5:
+          if time.time() - lo > 30.0:
+            bad("WARNING: Server overload")
+            lo = time.time()
     except:
       print "---------------------FATAL ERROR-----------------------"
       print '-'*60
