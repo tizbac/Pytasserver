@@ -219,7 +219,14 @@ class Main:
 	  error("Failed to get ip")
       time.sleep(240.0)
       
-    
+  def memusagethread(self):
+    while 1:
+      try:
+	self.memusage = int(os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "rss")).read())
+	
+      except:
+	print traceback.format_exc()
+      time.sleep(15)
   def syncallthread(self):
     if self.sql:
       while 1:
@@ -437,6 +444,7 @@ class Main:
     good("Server dump complete")
     return filename
   def run(self):
+    
     signal.signal(signal.SIGINT,self.onsignal)
     signal.signal(signal.SIGTERM,self.onsignal)
     signal.signal(signal.SIGHUP,self.onsignal)
@@ -543,6 +551,8 @@ class Main:
     good("Listening for connections on port %i" % (int(self.conf["listenport"])))
     self.msGZ.bind((self.conf["listenaddr"],int(self.conf["listenportgzip"])))
     self.msGZ.listen(int(self.conf["listenqlen"]) if "listenqlen" in self.conf else 5)
+    self.memusage = 0
+    thread.start_new_thread(self.memusagethread,())
     
     thread.start_new_thread(listengzip,(self,))
     try:
