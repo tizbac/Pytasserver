@@ -218,7 +218,15 @@ class Main:
       except:
 	  error("Failed to get ip")
       time.sleep(240.0)
-      
+  def clith(self):
+    while 1:
+      l = raw_input(">>> ")
+      try:
+	exec l
+	
+      except:
+	print traceback.format_exc()
+	
   def memusagethread(self):
     while 1:
       try:
@@ -555,6 +563,7 @@ class Main:
     thread.start_new_thread(self.memusagethread,())
     
     thread.start_new_thread(listengzip,(self,))
+    thread.start_new_thread(self.clith,())
     try:
       while 1:
 	cs,ip = self.ms.accept()
