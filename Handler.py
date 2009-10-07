@@ -273,6 +273,11 @@ class Client:
       self.battlestatus.update(status)
   def getbattlestatus(self):
       return self.battlestatus.calc()
+  def forgeadduser(self,target):
+      if 'a' in target.supportedfeatures:
+	return "ADDUSER %s %s %i %i\n" % (self.username,self.country,self.cpu,self.accountid)
+      else:
+	return "ADDUSER %s %s %i\n" % (self.username,self.country,self.cpu)
   def sync(self,db):
     if self.username == "":
       error("Sync() : Trying to sync a player with empty name!")

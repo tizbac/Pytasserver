@@ -99,9 +99,9 @@ try:
   allclients = dict(self.main.allclients)
   self.main.clientsusernames.update([(cl.username.lower(),c)])
   self.main.clientsaccid.update([(cl.accountid,c)])
-  self.main.broadcast("ADDUSER %s %s %i\n" % (cl.username,cl.country,cl.cpu))
+  self.main.broadcastEX(cl.forgeadduser)
   self.main.broadcast("CLIENTSTATUS %s %i\n" % (cl.username,int(cl.getstatus())))
-  c.send("MOTD Welcome to PyTasserver, %i clients connected\nMOTD %i Kb memory usage\n"%(len(self.main.allclients),self.main.memusage)
+  c.send("MOTD Welcome to PyTasserver, %i clients connected\nMOTD %i Kb memory usage\n"%(len(self.main.allclients),self.main.memusage))
   for c2 in allclients:
     cl2 = allclients[c2]
     if cl2.lgstatus >= 1:
