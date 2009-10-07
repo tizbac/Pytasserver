@@ -449,7 +449,7 @@ class Handler:
 	      
 	      for s in list(self.clients.keys()):
 	        try:
-		  print "%i == %i = %s" % (fd[0],s.fileno(),str(fd[0] == s.fileno()))
+		  #print "%i == %i = %s" % (fd[0],s.fileno(),str(fd[0] == s.fileno()))
 		  if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
 		    if pollhup:
 		      self.remove(s,"Poll Error: Connection reset by peer")
