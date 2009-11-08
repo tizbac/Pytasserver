@@ -43,6 +43,7 @@ from BanClient import *
 import threading
 from ServicesInterface import *
 from CommandLimit import *
+#import profile
 '''class Battle:
   def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname):
     self.type = typ
@@ -95,29 +96,31 @@ class compressedsocket:
 def listengzip(self):
   good("Listening for compressed connections on port %i" % (int(self.conf["listenportgzip"])))
   while 1:
-      cs,ip = self.msGZ.accept()
-      good("New gzipped connection from %s" %  str(ip))
-      try:
-	cs.setblocking(0)
-	cs = compressedsocket(cs)
-	cs.send("TASServer 0.35 0.79.0 8201 0\n")
-	hln = dict()
-	l = 900000
-	for h in self.handlers:
-	  hln.update([(len(h.clients.keys()),h)])
-	for k in hln:
-	  if k < l:
-	    lh = hln[k]
-	    l = k
-	ist = Handler.Client(ip,cs,lh,self)
-	lh.clients.update([(cs,ist)])
-	lh.pollobj.register(cs.sock,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
-	self.allclients.update([(cs,ist)])
-	#print "Handler %i: %s" % (lh.id,str(lh.clients))
-	good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
-	
-      except:
-	error(traceback.format_exc())
+    
+    cs,ip = self.msGZ.accept()
+    good("New gzipped connection from %s" %  str(ip))
+    try:
+      cs.setblocking(0)
+      cs = compressedsocket(cs)
+      cs.send("TASServer 0.35 0.79.0 8201 0\n")
+      hln = dict()
+      l = 900000
+      for h in self.handlers:
+        hln.update([(len(h.clients.keys()),h)])
+      for k in hln:
+        if k < l:
+          lh = hln[k]
+          l = k
+      ist = Handler.Client(ip,cs,lh,self)
+      lh.clients.update([(cs,ist)])
+      if "poll" in self.conf and self.conf["poll"] == "1":
+        lh.pollobj.register(cs.sock,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
+      self.allclients.update([(cs,ist)])
+      #print "Handler %i: %s" % (lh.id,str(lh.clients))
+      good("New connection accepted from %s on handler %i" % ( str(ip),lh.id))
+
+    except:
+      error(traceback.format_exc())
 
 class sd: #Makes mysql module threadsafe
   def __init__(self,host,username,password,database,debug=False):
@@ -215,8 +218,23 @@ class Main:
       except:
 	  error("Failed to get ip")
       time.sleep(240.0)
-      
-    
+  def clith(self):
+    while 1:
+      l = raw_input(">>> ")
+      try:
+	exec l
+	
+      except:
+	print traceback.format_exc()
+	
+  def memusagethread(self):
+    while 1:
+      try:
+	self.memusage = int(os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "rss")).read())
+	
+      except:
+	print traceback.format_exc()
+      time.sleep(15)
   def syncallthread(self):
     if self.sql:
       while 1:
@@ -434,6 +452,7 @@ class Main:
     good("Server dump complete")
     return filename
   def run(self):
+    
     signal.signal(signal.SIGINT,self.onsignal)
     signal.signal(signal.SIGTERM,self.onsignal)
     signal.signal(signal.SIGHUP,self.onsignal)
@@ -540,8 +559,11 @@ class Main:
     good("Listening for connections on port %i" % (int(self.conf["listenport"])))
     self.msGZ.bind((self.conf["listenaddr"],int(self.conf["listenportgzip"])))
     self.msGZ.listen(int(self.conf["listenqlen"]) if "listenqlen" in self.conf else 5)
+    self.memusage = 0
+    thread.start_new_thread(self.memusagethread,())
     
     thread.start_new_thread(listengzip,(self,))
+    thread.start_new_thread(self.clith,())
     try:
       while 1:
 	cs,ip = self.ms.accept()
@@ -570,7 +592,8 @@ class Main:
 		l = k
 	    ist = Handler.Client(ip,cs,lh,self)
 	    lh.clients.update([(cs,ist)])
-	    lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL )
+            if "poll" in self.conf and self.conf["poll"] == "1":
+	      lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL )
 	    self.allclients.update([(cs,ist)])
 	    try:
 	      if self.services:
@@ -585,9 +608,16 @@ class Main:
     except:
       error(traceback.format_exc())
       raise SystemExit(0)
-if len(sys.argv) > 1: 
+flags = ""
+if len(sys.argv) > 1:
+  flags = sys.argv[1]
+  if "d" in flags:
+    stold = thread.start_new_thread
+    def spawndebug(f,a):
+      debug("Spawning thread: %s %s" %(str(f),str(a)))
+      stold(f,a)
+    thread.start_new_thread = spawndebug
   ist = Main(sys.argv[1])
 else:
   ist = Main("")
-
-ret = ist.run()
+ist.run()
