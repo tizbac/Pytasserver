@@ -211,6 +211,8 @@ class Client:
     #		     { 1 : "Logged in" , 2 : "Bot" , 4 : "Moderator", 8 : "Server administrator" , 16 : "In battle" , 32 : "Not in battle" , 64 : "Battlefounder"}
     self.accountid = 0
     self.supportedfeatures = [] 
+    self.userid = "" #Just to have it, it's useless
+    self.lobbyversion = "Unknown"
     # FEATURES: CLIENTCHANNELSTATUS, ZIPSTREAM, 250PLAYERS
     #
     #
@@ -271,6 +273,11 @@ class Client:
       self.battlestatus.update(status)
   def getbattlestatus(self):
       return self.battlestatus.calc()
+  def forgeadduser(self,target):
+      if 'a' in target.supportedfeatures:
+	return "ADDUSER %s %s %i %i\n" % (self.username,self.country,self.cpu,self.accountid)
+      else:
+	return "ADDUSER %s %s %i\n" % (self.username,self.country,self.cpu)
   def sync(self,db):
     if self.username == "":
       error("Sync() : Trying to sync a player with empty name!")
@@ -407,57 +414,77 @@ class Handler:
   def processcommand(self,args,cl,co,c):
     pass
   def ml(self):
+    lo = 0.0
+    pbtime = 0.0 #Poll begin time
+    petime = 0.0 #Poll end time
+    rbtime = 0.0 #Read begin time
+    retime = 0.0 #Read end time
+    wbtime = 0.0 #Write begin time
+    wetime = 0.0 #Write end time
+    mbtime = 0.0 #Mute expire check
+    metime = 0.0
+    cmbtime = 0.0 #Command processing time
+    cmetime = 0.0 
     self.clients = dict()
     self.clientsusernames = dict()
     lastexpirecheck = time.time()#It limits ban & mute expire checks so they gets checked every sec also with a lot of load
     try:
       while 1:
 	#debug("Handler %i: %f %s" % (self.id,time.time(),str(self.needflush)))
+	
 	#time.sleep(0.02)
 	#iR,oR,eR = select.select(self.clients.keys(),self.clients.keys(),[],0.5)
 	iR = []
+	pbtime = time.time()
 	oR = list(self.clients.keys())
-	
-	pl = self.pollobj.poll(1 if self.needflush else 700)
-	#print pl
-	for fd in pl:
-	  pollin = bool((fd[1] >> 0) & 1)
-	  pollpri = bool((fd[1] >> 1) & 1)
-	  pollout = bool((fd[1] >> 2) & 1)
-	  pollerr = bool((fd[1] >> 3) & 1)
-	  pollhup = bool((fd[1] >> 4) & 1)
-	  pollnval = bool((fd[1] >> 5) & 1)
-	 # print pollin,pollpri,pollout,pollerr,pollhup,pollnval
-	  if pollin or pollpri:
-	    #print " %s ready to receive data" % str(fd)
-	    for s in list(self.clients.keys()):
-	      if s.fileno() == fd[0]:
-		newsocket = s
-	    iR.append(newsocket)
-	  if pollerr or pollhup or pollnval:
-	    print "Removing %s , socket error" % str(fd)
-	    
-	    for s in list(self.clients.keys()):
+	if "poll" in self.main.conf and self.main.conf["poll"] == "1":
+	  pl = self.pollobj.poll(1 if self.needflush else 700)
+	  _s = time.time()
+	  #print pl
+	  for fd in pl:
+	    pollin = bool((fd[1] >> 0) & 1)
+	    pollpri = bool((fd[1] >> 1) & 1)
+	    pollout = bool((fd[1] >> 2) & 1)
+	    pollerr = bool((fd[1] >> 3) & 1)
+	    pollhup = bool((fd[1] >> 4) & 1)
+	    pollnval = bool((fd[1] >> 5) & 1)
+	   # print pollin,pollpri,pollout,pollerr,pollhup,pollnval
+	    if pollin or pollpri:
+	      #print " %s ready to receive data" % str(fd)
+	      for s in list(self.clients.keys()):
+	        if s.fileno() == fd[0]:
+		  newsocket = s
+	      iR.append(newsocket)
+	    if pollerr or pollhup or pollnval:
+	      print "Removing %s , socket error" % str(fd)
+	      
+	      for s in list(self.clients.keys()):
+	        try:
+		  #print "%i == %i = %s" % (fd[0],s.fileno(),str(fd[0] == s.fileno()))
+		  if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
+		    if pollhup:
+		      self.remove(s,"Poll Error: Connection reset by peer")
+		    elif pollnval:
+		      self.remove(s,"Poll Error: Bad file descriptor")
+		    elif pollerr:
+		      self.remove(s,"Poll Error: Socket Exception")
+	        except:
+		  pass
 	      try:
-		print "%i == %i = %s" % (fd[0],s.fileno(),str(fd[0] == s.fileno()))
-		if fd[0] == s.fileno(): #TODO: Very slow , needs optimization
-		  if pollhup:
-		    self.remove(s,"Poll Error: Connection reset by peer")
-		  elif pollnval:
-		    self.remove(s,"Poll Error: Bad file descriptor")
-		  elif pollerr:
-		    self.remove(s,"Poll Error: Socket Exception")
+	        self.pollobj.unregister(fd[0])
 	      except:
-		pass
-	    try:
-	      self.pollobj.unregister(fd[0])
-	    except:
-	      pass
+	        pass
+        else:
+          iR = list(self.clients.keys())
+          time.sleep(0.05)
+          _s = time.time()
+	petime = time.time()
 	#print iR
 	#if not self.needflush:
 	#  print "Sleep: ",self.needflush
 	#  time.sleep(0.5)
 	#debug("id = %i"%self.id)
+	mbtime = time.time()
 	if self.id == 1 and time.time() - lastexpirecheck > 1.0:#Only run that on one handler
 		#debug("Check mutes & bans expire")
 		chsafe = dict(self.main.channels)
@@ -520,6 +547,8 @@ class Handler:
 			traceback.print_exc(file=sys.stdout)
 			print '-'*60
 		lastexpirecheck = time.time()
+	metime = time.time()
+	rbtime = time.time()
 	for co in iR:
 	  if co in self.clients:
 	    cl = self.clients[co]
@@ -599,7 +628,8 @@ class Handler:
 		  else:
 		    c.send("SERVERMSG Not enough privileges to use '%s' : %s\n"%( args[0].upper(),access[1]))
 		    
-		    
+	retime = time.time()
+	wbtime = time.time()
 	for co in dict(self.clients):
 	  if co in self.clients:
 	    cl = self.clients[co]
@@ -607,12 +637,9 @@ class Handler:
 	    
 	    if time.time() - cl.lastping > 30.0:
 	      self.remove(co,"Ping Timeout")
-	    
-	    for s in oR:
-	      if s in self.clients:
-		  self.clients[s].sso.Flush()
+	    self.clients[co].sso.Flush()
 
-
+	wetime = time.time()
 		    
 		  #s.send(self.clients[s].sso.buf)
 		  #self.clients[s].sso.buf = ""
@@ -621,7 +648,14 @@ class Handler:
 		  #if not sys.exc_value[1] == "Resource temporarily unavailable":
 		  # self.remove(co,"Error %i: %s" % (int(se),str(sys.exc_value[1])))
 		
-	self.needflush = False	    
+	self.needflush = False
+	#debug("Handler End %i: %f %s" % (self.id,time.time(),str(self.needflush)))
+	_e = time.time()
+	#debug("Diff: %f"%(_e-_s))
+	if _e-_s > 0.5:
+          if time.time() - lo > 30.0:
+            bad("WARNING: Server overload [Poll: %f , Read: %f , Write: %f , Mute System: %f]" %(petime-pbtime,retime-rbtime,wetime-wbtime,metime-mbtime))
+            lo = time.time()
     except:
       print "---------------------FATAL ERROR-----------------------"
       print '-'*60
