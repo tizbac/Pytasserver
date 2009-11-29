@@ -235,8 +235,9 @@ class Main:
       return
     while 1:
       try:
-	self.memusage = int(os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "rss")).read())
-	
+	fd = os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "rss"))
+	self.memusage = int(fd.read())
+	fd.close()#I hope that it works properly
       except:
 	print traceback.format_exc()
       time.sleep(15)
