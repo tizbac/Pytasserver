@@ -35,7 +35,8 @@ import commands
 from ParseConfig import *
 from colors import *
 from utilities import *
-import _mysql as mysql
+#import _mysql as mysql
+mysql = None
 import Handler
 import zlib
 import urllib
@@ -43,6 +44,7 @@ from BanClient import *
 import threading
 from ServicesInterface import *
 from CommandLimit import *
+import platform
 #import profile
 '''class Battle:
   def __init__(self,typ,nattype,password,port,maxplayers,hashcode,minrank,maphash,mapname,title,modname):
@@ -113,7 +115,7 @@ def listengzip(self):
           l = k
       ist = Handler.Client(ip,cs,lh,self)
       lh.clients.update([(cs,ist)])
-      if "poll" in self.conf and self.conf["poll"] == "1":
+      if "poll" in self.conf and self.conf["poll"] == "1" and platform.system() == "Linux":
         lh.pollobj.register(cs.sock,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL | select.POLLNVAL)
       self.allclients.update([(cs,ist)])
       #print "Handler %i: %s" % (lh.id,str(lh.clients))
@@ -228,6 +230,9 @@ class Main:
 	print traceback.format_exc()
 	
   def memusagethread(self):
+    if platform.system() != "Linux":
+      self.memusage = -1
+      return
     while 1:
       try:
 	self.memusage = int(os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "rss")).read())
@@ -455,7 +460,8 @@ class Main:
     
     signal.signal(signal.SIGINT,self.onsignal)
     signal.signal(signal.SIGTERM,self.onsignal)
-    signal.signal(signal.SIGHUP,self.onsignal)
+    if platform.system() == "Linux":
+      signal.signal(signal.SIGHUP,self.onsignal)
     signal.signal(signal.SIGSEGV,self.onsignal)
     signal.signal(signal.SIGABRT,self.onsignal)
     #signal.signal(signal.SIGFLT,self.onsignal)
@@ -505,6 +511,10 @@ class Main:
     else:
       self.cmdlimit = None
     if self.conf["sql"] == "1":
+      global mysql
+      notice("Loading _mysql module...")
+      mysql = __import__("_mysql")
+      good("Module loaded")
       if bool(int(self.conf["allowunregisteredusers"])):
 	notice("Users can login without registering!")
       self.au = bool(int(self.conf["allowunregisteredusers"]))
@@ -541,7 +551,10 @@ class Main:
 	self.channels.update([(name,Channel(r[1],name,mutes,topic,operators,int(r[6]),r[5],str2dict(r[7],str,float),str2dict(r[8],int,float),str2dict(r[9],str,float)))])
 	self.channels[r[0]].confirmed = True
 	good("Added channel %s from database" % r[0])
-
+    else:
+      self.database = None
+      self.sql = False
+      self.au = True
     i = 0
     while i < int(self.conf["handlers"]):
       self.handlers.append(Handler.Handler(self,i+1))
@@ -592,7 +605,7 @@ class Main:
 		l = k
 	    ist = Handler.Client(ip,cs,lh,self)
 	    lh.clients.update([(cs,ist)])
-            if "poll" in self.conf and self.conf["poll"] == "1":
+            if "poll" in self.conf and self.conf["poll"] == "1" and platform.system() == "Linux":
 	      lh.pollobj.register(cs,select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR | select.POLLNVAL )
 	    self.allclients.update([(cs,ist)])
 	    try:

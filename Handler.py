@@ -16,7 +16,7 @@ Copyright (C) 2009  Tiziano Bacocco
     """
   
 import socket,string,thread,time,threading
-import sys,traceback,pdb,re,os
+import sys,traceback,pdb,re,os,platform
 import base64,md5,commands,ip2country
 import select,os
 from utilities import *
@@ -144,7 +144,7 @@ class ssock:
 	  
       except socket.error:
 	se = sys.exc_value[0]
-	if not sys.exc_value[1] == "Resource temporarily unavailable":
+	if se != 11 and se != 10035:
 	  self.ist.remove(self.sck,"Write Error %i: %s" % (int(se),str(sys.exc_value[1])))
       except:
 	print traceback.format_exc()
@@ -279,6 +279,8 @@ class Client:
       else:
 	return "ADDUSER %s %s %i\n" % (self.username,self.country,self.cpu)
   def sync(self,db):
+    if not db:
+      return
     if self.username == "":
       error("Sync() : Trying to sync a player with empty name!")
       return
@@ -308,7 +310,8 @@ class Handler:
     
     self.needflush = False
     self.clients = dict()
-    self.pollobj = select.poll()
+    if "poll" in main.conf and main.conf["poll"] == "1" and platform.system() == "Linux":
+      self.pollobj = select.poll()
     self.main = main
     for f in os.listdir("cmds/"):
       #print f.split(".")
@@ -437,7 +440,7 @@ class Handler:
 	iR = []
 	pbtime = time.time()
 	oR = list(self.clients.keys())
-	if "poll" in self.main.conf and self.main.conf["poll"] == "1":
+	if "poll" in self.main.conf and self.main.conf["poll"] == "1" and platform.system() == "Linux":
 	  pl = self.pollobj.poll(1 if self.needflush else 700)
 	  _s = time.time()
 	  #print pl
@@ -565,7 +568,7 @@ class Handler:
 		    break
 	    except socket.error:
 		  se = sys.exc_value[0]
-		  if not sys.exc_value[1] == "Resource temporarily unavailable":
+		  if se != 10035 and se != 11:
 		    self.remove(co,"Read Error %i: %s" % (int(se),str(sys.exc_value[1])))
 	    except IOError:
 		  self.remove(co,"IOError")

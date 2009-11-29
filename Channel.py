@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from utilities import *
 from colors import *
-import _mysql as mysql
+#import _mysql as mysql
 class Channel:
   operators = []
   founder = ""
@@ -43,6 +43,8 @@ class Channel:
     	return (True,"IP-Muted on channel")
     return (False,"OK")
   def confirm(self,db):
+    if not db:
+      return
     db.query("SELECT name FROM channels WHERE name = '%s' LIMIT 1" % self.name.replace("'","\\'"))
     res = db.store_result()
     if res.num_rows() == 0:
@@ -65,6 +67,8 @@ class Channel:
 	self.dbid = int(res.fetch_row()[0][0])
     self.confirmed = True
   def sync(self,db):
+    if not db:
+      return
     debug("Saving channel #%s in database" % self.name)
     mutesstr = ""
     for m in self.mutes:
