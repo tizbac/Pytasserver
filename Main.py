@@ -38,7 +38,7 @@ from utilities import *
 #import _mysql as mysql
 mysql = None
 import Handler
-import zlib
+
 import urllib
 from BanClient import *
 import threading
@@ -62,38 +62,7 @@ import platform
     self.players = []'''
 
 
-class compressedsocket:
-  def __init__(self,sock):
-    self.sock = sock
-    self.datatosend = ""
-    self.co = zlib.compressobj(9)
-    self.sock.send(self.co.flush(zlib.Z_SYNC_FLUSH))
-    self.dc = zlib.decompressobj()
-  def close(self):
-    self.sock.close()
-  def flush(self):
-    self.send("")#Will cause flush
-  def send(self,data):
-    if len(self.datatosend) > 0 or len(data) > 0:
-            self.co.compress(data)
-            dts = self.datatosend + self.co.flush(zlib.Z_SYNC_FLUSH)
-            bs = self.sock.send(dts)
-            self.datatosend = ""
-            if bs != len(dts):
-                self.datatosend = dts[bs-1:]
-    return len(data)
-  def recv(self,sz):
-    data = self.sock.recv(sz)
-    #debug("Compressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
-    if data == "":
-	return ""
-    data = self.dc.decompress(data)
-    debug("UNCompressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
-    if data == "":
-	data = "\n"
-    return data
-  def fileno(self):
-    return self.sock.fileno()
+
 
 def listengzip(self):
   good("Listening for compressed connections on port %i" % (int(self.conf["listenportgzip"])))
@@ -228,7 +197,13 @@ class Main:
 	
       except:
 	print traceback.format_exc()
-	
+  def convertsockettozlib(self,s):
+    if not 'sck' in dir(s):
+      error("Failed to convert %s to zlib socket",str(s))
+      return 1
+    s.sck = compressedsocket(s.sck)
+    return 0
+    
   def memusagethread(self):
     if platform.system() != "Linux":
       self.memusage = -1

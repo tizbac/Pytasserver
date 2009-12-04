@@ -19,6 +19,7 @@ import socket,string,thread,time,threading
 import sys,traceback,pdb,re,os,platform
 import base64,md5,commands,ip2country
 import select,os
+import zlib
 from utilities import *
 from colors import *
 class CommandError(Exception):
@@ -96,11 +97,45 @@ class Battle:
   def forgeupdatebattleinfo(self):
     s = "UPDATEBATTLEINFO %i %i %i %s %s\n" % (self.id,self.speccount,self.locked,self.maphash,self.mapname)
     return s
+class compressedsocket:
+  def __init__(self,sock):
+    self.sock = sock
+    self.datatosend = ""
+    self.co = zlib.compressobj(9)
+    self.sock.send(self.co.flush(zlib.Z_SYNC_FLUSH))
+    self.dc = zlib.decompressobj()
+  def close(self):
+    self.sock.close()
+  def flush(self):
+    self.send("")#Will cause flush
+  def send(self,data):
+    if len(self.datatosend) > 0 or len(data) > 0:
+            self.co.compress(data)
+            dts = self.datatosend + self.co.flush(zlib.Z_SYNC_FLUSH)
+            bs = self.sock.send(dts)
+            self.datatosend = ""
+            if bs != len(dts):
+                self.datatosend = dts[bs-1:]
+    return len(data)
+  def recv(self,sz):
+    data = self.sock.recv(sz)
+    #debug("Compressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
+    if data == "":
+	return ""
+    data = self.dc.decompress(data)
+    debug("UNCompressed: "+data.replace("\n",red+"\\n"+blue).replace("\r",red+"\\r"+blue))
+    if data == "":
+	data = "\n"
+    return data
+  def fileno(self):
+    return self.sock.fileno()
 class ssock:
   def __init__(self,sock,ist):
     self.buf = []
     self.ist = ist
     self.sck = sock
+    self.zlib = False
+    self.converttozlib = False
   def send(self,data):
     self.buf.append(data)
     self.ist.needflush = True
@@ -149,7 +184,11 @@ class ssock:
       except:
 	print traceback.format_exc()
 	self.ist.remove(self.sck,"Critical Error While flushing buffer, See stdout for details")
-	
+    if self.converttozlib and not self.zlib:
+      info("Converting socket %s to zlib"%str(self))
+      self.sck = compressedsocket(self.sck)
+      self.zlib = True
+      self.converttozlib = False
     #print buf
 class BattleStatus:
   def __init__(self,status):
