@@ -210,9 +210,9 @@ class Main:
       return
     while 1:
       try:
-	fd = os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "rss"))
-	self.memusage = int(fd.read())
-	fd.close()#I hope that it works properly
+	#fd = os.popen('ps -p %d -o %s | tail -1' %(os.getpid(), "rss")) It leaks file descriptors
+	self.memusage = int(commands.getoutput("ps -p %d -o %s | tail -1"%(os.getpid(),"rss")))
+	#fd.close()#I hope that it works properly
       except:
 	print traceback.format_exc()
       time.sleep(15)
