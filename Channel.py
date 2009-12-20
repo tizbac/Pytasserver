@@ -75,4 +75,4 @@ class Channel:
       mutesstr += "%s:%s " % (str(m),str(self.mutes[m]))
     ops = ' '.join(self.operators)
     db.query("UPDATE channels SET name = '%s',founder = '%s',accountmutes = '%s',operators = '%s', topic = '%s', password = '%s', accountmutes= '%s', ipmutes='%s', accountbans='%s', ipbans='%s' WHERE id = %i" %
-    (mysql.escape_string(self.name),str(self.founder),mysql.escape_string(mutesstr),mysql.escape_string(ops),mysql.escape_string(self.topic),mysql.escape_string(self.key),mysql.escape_string(dict2str(self.mutes)),mysql.escape_string(dict2str(self.ipmutes)),mysql.escape_string(dict2str(self.accountbans)),mysql.escape_string(dict2str(self.ipbans)),self.dbid),False)
+    (db.escape_string(self.name),str(self.founder),db.escape_string(mutesstr),db.escape_string(ops),db.escape_string(self.topic),db.escape_string(self.key),db.escape_string(dict2str(self.mutes)),db.escape_string(dict2str(self.ipmutes)),db.escape_string(dict2str(self.accountbans)),db.escape_string(dict2str(self.ipbans)),self.dbid),False)

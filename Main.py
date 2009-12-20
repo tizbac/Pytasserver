@@ -104,7 +104,7 @@ class sd: #Makes mysql module threadsafe
     self.lasterror = False
     self.lock = threading.Lock()
     self.database = mysql.connect("localhost",self.uname,self.pw,self.db)
-  def escape(self,s):
+  def escape_string(self,s):
     return mysql.escape_string(s)
   def query(self,q,Lock=True):
     i = 0
