@@ -676,10 +676,10 @@ class Handler:
 	  if co in self.clients:
 	    cl = self.clients[co]
 	    c = cl.sso
-	    
+	    self.clients[co].sso.Flush()
 	    if time.time() - cl.lastping > 30.0:
 	      self.remove(co,"Ping Timeout")
-	    self.clients[co].sso.Flush()
+	    
 
 	wetime = time.time()
 		    
